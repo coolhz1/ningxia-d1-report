@@ -1,0 +1,301 @@
+{
+  "images": [
+    {
+      "date": "2026-10-01",
+      "path": "2026-10-01.png",
+      "missing_optional": [],
+      "missing_main": [],
+      "sha256": "421ff01ff02e0658682e1dca1b8c9d6c8e9dac719f62cf04a7c2ea26ac1fff76"
+    },
+    {
+      "date": "2026-10-02",
+      "path": "2026-10-02.png",
+      "missing_optional": [],
+      "missing_main": [],
+      "sha256": "5c9061d0d3f3140e7dc7a2b57c74236c0457b704e6d17fff791dbe16a8423dd1"
+    },
+    {
+      "date": "2026-10-03",
+      "path": "2026-10-03.png",
+      "missing_optional": [],
+      "missing_main": [],
+      "sha256": "06140625a64dd3e31ff23c8d78bece1e70e89c512f40adbb412af67d24dea523"
+    },
+    {
+      "date": "2026-10-04",
+      "path": "2026-10-04.png",
+      "missing_optional": [],
+      "missing_main": [],
+      "sha256": "e9fa5fa39021fc782d67059d27c3a7dce0c736847d8d92405763ee8a1033954c"
+    },
+    {
+      "date": "2026-10-05",
+      "path": "2026-10-05.png",
+      "missing_optional": [],
+      "missing_main": [],
+      "sha256": "ab97778ab4c79fef07c53a5ede20ec2b74343f4c17685e2bea2c1f3d43e22e92"
+    },
+    {
+      "date": "2026-10-06",
+      "path": "2026-10-06.png",
+      "missing_optional": [],
+      "missing_main": [],
+      "sha256": "5cd2d4b45f026211780ece1c8d8259fdbbe54af126c690e19ceb72e09252f294"
+    },
+    {
+      "date": "2026-10-07",
+      "path": "2026-10-07.png",
+      "missing_optional": [],
+      "missing_main": [],
+      "sha256": "ce84a8b4a674d813add9b5a6575b4df0815275efb58a4978f815a97fb12cf760"
+    },
+    {
+      "date": "2026-10-08",
+      "path": "2026-10-08.png",
+      "missing_optional": [],
+      "missing_main": [],
+      "sha256": "c434afbdf2c6495feb36c28353add89180b5ed073018d3e594c9bfb65c47db6e"
+    },
+    {
+      "date": "2026-10-09",
+      "path": "2026-10-09.png",
+      "missing_optional": [],
+      "missing_main": [],
+      "sha256": "64ee692015e77259c2cc08db07ceb83655ded3ae20c25ae599bf4715898812b2"
+    },
+    {
+      "date": "2026-10-10",
+      "path": "2026-10-10.png",
+      "missing_optional": [],
+      "missing_main": [],
+      "sha256": "f2915f962bb456b974506cbfa02ff5e514e918d58dd51ce21a2851c533b548ec"
+    },
+    {
+      "date": "2026-10-11",
+      "path": "2026-10-11.png",
+      "missing_optional": [],
+      "missing_main": [],
+      "sha256": "9aeca10f1ca9374d7b8d7545a9fea00043d55532a5b2953863c45e417a161b7d"
+    },
+    {
+      "date": "2026-10-12",
+      "path": "2026-10-12.png",
+      "missing_optional": [],
+      "missing_main": [],
+      "sha256": "2cf9d7d397035aebebfb4d72d3a532d2277ae7fad76911f3ed3160bb93403221"
+    },
+    {
+      "date": "2026-10-13",
+      "path": "2026-10-13.png",
+      "missing_optional": [],
+      "missing_main": [],
+      "sha256": "bb83e4b09f1683dc46e443f01d384d490605a036b64aca2f8f6b33eb4d92fb82"
+    },
+    {
+      "date": "2026-10-14",
+      "path": "2026-10-14.png",
+      "missing_optional": [],
+      "missing_main": [],
+      "sha256": "2909cf4679971bde7e2cf7336b38ae6ab9adb605ead2ca44018693eea0037bb2"
+    },
+    {
+      "date": "2026-10-15",
+      "path": "2026-10-15.png",
+      "missing_optional": [],
+      "missing_main": [],
+      "sha256": "87f24d8cfc9f02bb8e1d2832e706be2ed7269b522f826d458da00d033661d4a7"
+    },
+    {
+      "date": "2026-10-16",
+      "path": "2026-10-16.png",
+      "missing_optional": [],
+      "missing_main": [],
+      "sha256": "4d435d1fd4d52b28b97450afd6217f572eb12fef243d73fad837f7d2a9e7a1d8"
+    },
+    {
+      "date": "2026-10-17",
+      "path": "2026-10-17.png",
+      "missing_optional": [],
+      "missing_main": [],
+      "sha256": "65156ec1ee7780a832692296d97f6cc94688c188306664c2521e4c7cdb8ea679"
+    },
+    {
+      "date": "2026-10-18",
+      "path": "2026-10-18.png",
+      "missing_optional": [],
+      "missing_main": [],
+      "sha256": "50501a34438dc69786716c7b2d508bd4f24a49d7e598094c08331bcfd621536f"
+    },
+    {
+      "date": "2026-10-19",
+      "path": "2026-10-19.png",
+      "missing_optional": [],
+      "missing_main": [],
+      "sha256": "629e6983d6b1584a9e48e937d9ef9f0d2de44c1e699b894fb775a0cd7c6d2839"
+    },
+    {
+      "date": "2026-10-20",
+      "path": "2026-10-20.png",
+      "missing_optional": [],
+      "missing_main": [],
+      "sha256": "777a3fb14ab39443b581c1b39912e08f2d5e7a65c08325a0a175e946ad7913f9"
+    },
+    {
+      "date": "2026-10-21",
+      "path": "2026-10-21.png",
+      "missing_optional": [],
+      "missing_main": [],
+      "sha256": "ab0dbb3c958bfcdb3ec0e1b44046bc3dcd98d46ec30abada94403629c010fdbe"
+    },
+    {
+      "date": "2026-10-22",
+      "path": "2026-10-22.png",
+      "missing_optional": [],
+      "missing_main": [],
+      "sha256": "4442dd9facb8783019c96c1efb79fd45d6c1a2bf8d5789622d73ce9788935ac3"
+    },
+    {
+      "date": "2026-10-23",
+      "path": "2026-10-23.png",
+      "missing_optional": [],
+      "missing_main": [],
+      "sha256": "e0bc358b6c910b9652ab0adff363b1b4db90ab0417e873f7ec7208126dd4e21c"
+    },
+    {
+      "date": "2026-10-24",
+      "path": "2026-10-24.png",
+      "missing_optional": [],
+      "missing_main": [],
+      "sha256": "04c42d61318654f901e51ebc7acb1a8a7ba2da87674b590061e59b9c31be9ade"
+    },
+    {
+      "date": "2026-10-25",
+      "path": "2026-10-25.png",
+      "missing_optional": [],
+      "missing_main": [],
+      "sha256": "fc99a8f8d921dd398bc1604307ddb056e201bf0d1374973ca4f8d30b00e31f7e"
+    },
+    {
+      "date": "2026-10-26",
+      "path": "2026-10-26.png",
+      "missing_optional": [],
+      "missing_main": [],
+      "sha256": "543413a98caca84dba110a08c9166f80637bef723b8a393dba70b4681b46d2f5"
+    },
+    {
+      "date": "2026-10-27",
+      "path": "2026-10-27.png",
+      "missing_optional": [],
+      "missing_main": [],
+      "sha256": "4778626ddcb0dc80f3e0afc44b7347bdc0b4872e3a19baf0adaab6d8c89e13af"
+    },
+    {
+      "date": "2026-10-28",
+      "path": "2026-10-28.png",
+      "missing_optional": [],
+      "missing_main": [],
+      "sha256": "a3a31e2262e957304d66951b32f9b17d75571deb921ecd5e90dc23605ac21dee"
+    },
+    {
+      "date": "2026-10-29",
+      "path": "2026-10-29.png",
+      "missing_optional": [],
+      "missing_main": [],
+      "sha256": "ce33d925f5e24f30783d3b3bab3e4031470338f499d71b6abfcec88b12fb3619"
+    },
+    {
+      "date": "2026-10-30",
+      "path": "2026-10-30.png",
+      "missing_optional": [
+        "富余",
+        "下调",
+        "弃电",
+        "缺口"
+      ],
+      "missing_main": [
+        "总出力",
+        "短期负荷"
+      ],
+      "sha256": "03f65237680bb231f36647860dc79861ed66feed5de57c4b326c70720d9c8223"
+    },
+    {
+      "date": "2026-10-31",
+      "path": "2026-10-31.png",
+      "missing_optional": [
+        "富余",
+        "下调",
+        "弃电",
+        "缺口"
+      ],
+      "missing_main": [
+        "总出力",
+        "短期负荷"
+      ],
+      "sha256": "5f4e2051c69ac4dd73ec43d45fc98b370ccd79a211b907fc8b331b1a3ab93a53"
+    },
+    {
+      "date": "2026-11-01",
+      "path": "2026-11-01.png",
+      "missing_optional": [
+        "富余",
+        "下调",
+        "弃电",
+        "缺口"
+      ],
+      "missing_main": [
+        "总出力",
+        "短期负荷"
+      ],
+      "sha256": "f5fbc3c5aef0259a4a124184fd15eb6285c8631aee50c34a3218cf65ad873b0d"
+    },
+    {
+      "date": "2026-11-02",
+      "path": "2026-11-02.png",
+      "missing_optional": [
+        "富余",
+        "下调",
+        "弃电",
+        "缺口"
+      ],
+      "missing_main": [
+        "总出力",
+        "短期负荷"
+      ],
+      "sha256": "ed5394d84ff294ac7c1af2a80d6cc5cf96c0ce7f67f1f45f4d9f67fb7e2cf50b"
+    },
+    {
+      "date": "2026-11-03",
+      "path": "2026-11-03.png",
+      "missing_optional": [
+        "富余",
+        "下调",
+        "弃电",
+        "缺口"
+      ],
+      "missing_main": [
+        "总出力",
+        "短期负荷"
+      ],
+      "sha256": "fa94c94c25b9dada4f578dfe20971d4aaca607612feb89f842e676425bc46b21"
+    },
+    {
+      "date": "2026-11-04",
+      "path": "2026-11-04.png",
+      "missing_optional": [],
+      "missing_main": [],
+      "sha256": "334a50564bdbf5ebfa8de4e958ac427a48fd184c5835a263c19c8aaa9347018a"
+    },
+    {
+      "date": "2026-11-05",
+      "path": "2026-11-05.png",
+      "missing_optional": [],
+      "missing_main": [],
+      "sha256": "37215117f182e353960b4408948ff02afc3e1db8246b45532f8ff06cb44dbedc"
+    }
+  ],
+  "count": 36,
+  "canonical_sha256": "becaec22fcaeeb9fc0e41268f989fd2971d379dc635adf11b18fbd24b47e5baf",
+  "weather": "Cached fixed lead1 forecasts; never target-day realized meteorology",
+  "NWP": "GFS/ECMWF/ICON 100m wind; mean of same 7 cached locations",
+  "market": "Archived forecast fields, not historical publication vintages"
+}
