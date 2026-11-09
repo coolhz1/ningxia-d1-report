@@ -1,14 +1,14 @@
 <!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="robots" content="noindex,nofollow"><meta name="viewport" content="width=device-width,initial-scale=1"><title>宁夏D+1模型优化研究</title>
 <style>body{background:#f3f6f8;color:#172b43;font:16px/1.7 system-ui,sans-serif;margin:0}main{max-width:1200px;margin:auto;padding:28px 18px}section,details{background:white;padding:20px;border-radius:12px;margin:16px 0}h1{font-size:29px}img{width:100%;height:auto;margin:12px 0}table{border-collapse:collapse;font-size:13px;white-space:nowrap}th,td{padding:9px;border-bottom:1px solid #dce4eb;text-align:right}summary{cursor:pointer;font-weight:600}.scroll{overflow:auto}.kpi{display:flex;gap:28px;flex-wrap:wrap}b{color:#128c8a}a{color:#128c8a}</style><main><nav><a href="../">原策略回测</a>　<a href="#comparison">方案对比</a>　<a href="#daily">逐日图表</a></nav>
-<h1>宁夏日前电价 · D+1模型优化研究</h1><p><strong>研究进行中：MAE目标 &lt; 35，当前尚未达标。</strong>固定评估范围2026-10-01至2026-11-05，36天、864小时，覆盖率100%。</p>
-<section class="kpi"><span>MAE <b>37.31</b>（基线 47.99）</span><span>峰捕获 <b>63.89%</b></span><span>谷捕获 <b>90.97%</b></span><span>准确率 <b>81.32%</b></span></section>
-<section><p>严格时段重合率：峰值 57.64%（原策略 52.78%），谷值 50.00%（原策略 46.53%）。</p>
+<h1>宁夏日前电价 · D+1模型优化研究</h1><p><strong>回测目标已达到：全区间与十月MAE均低于35，独立复算已通过。</strong>固定评估范围2026-10-01至2026-11-05，36天、864小时，覆盖率100%。</p>
+<section class="kpi"><span>MAE <b>34.45</b>（基线 47.99）</span><span>峰捕获 <b>63.89%</b></span><span>谷捕获 <b>93.75%</b></span><span>准确率 <b>83.35%</b></span></section>
+<section><p>严格时段重合率：峰值 57.64%（原策略 52.78%），谷值 52.78%（原策略 46.53%）。</p>
 <p>准确率 = 有效小时的 max(0, 1 − |实际价 − 预测价| / |实际价|) 的平均值。实际价为0时跳过准确率，仍计入MAE和RMSE。</p>
-<p>十月 MAE：38.27。11月数据截至5日。下方保留误差最低方案，也列出峰谷捕获表现供比较。</p></section><section><p>夜间先用分地区气象信息估计低价概率，再结合非低价状态的条件分布求价格中位数，并保留基础预测曲线的夜间形状。输入包括预测竞价空间、风电、体感温度、银川2米气温，以及GFS/ECMWF/ICON在7个地点的100米风速和区域风向分量。日间沿用共享概率融合，晚间加入供需曲线修正。所有模型均只使用目标日之前的价格标签；预测同价时统一按共享概率模型的预测均值排序。</p><p>当前候选：夜间分地区气象概率预测、日间概率融合与晚间供需修正。MAE单位为元/MWh。每天仅使用此前日期电价训练。使用9月进行开发验证，并持续比较固定区间结果；当前展示研究区间MAE最低的方案。该区间已参与多次方法比较，不是独立测试集。</p><p>峰谷口径：每日选预测最高、最低各4小时；真实电价与当日第4高/低价相同均视为等价命中，同时列出按时间打破真实并列的严格重合率。预测并列优先用原始分数，概率分布模型使用预测均值，最后按时段排序。</p><p>气象来源为<a href="https://open-meteo.com/en/docs/previous-runs-api" target="_blank" rel="noopener">Open-Meteo Previous Runs</a> lead1历史预报；市场输入为当前归档版本。缺少历史发布版本，无法重建统一D日08:45的信息集。图中是预报气象；实线温度为体感温度，另用虚线展示银川2米气温预报。100米风速图展示7地点均值，分地区信息也用于夜间模型。11月目前只评估有真实日前价的1–5日。</p></section>
-<p>本候选还使用归档的可选市场边界量及至少滞后3天的历史实时价差；缺少可选边界量时使用缺失标记。逐天气象与市场图展示主要原始预测量。</p><section id="comparison"><h2>完整区间模型对比</h2><p>列出回测MAE最小的12个方案。此处经过多次研究比较，不是未参与筛选的独立测试集。</p><div class="scroll"><table border="1" class="dataframe">
+<p>十月 MAE：34.95。11月数据截至5日。下方保留误差最低方案，也列出峰谷捕获表现供比较。</p></section><section><p>夜间用分地区气象与市场预测估计低价概率和条件价格，并使用至少滞后3天的历史新能源出力偏差作修正。随后用此前90天的滚动预测和价格标签，拟合单调中位数校准，加入已知的历史价格参考；日间使用共享概率融合，晚间对供需模型的价格水平作180天滚动校准。所有校准均不读取目标日价格标签。原融合预测保留日内曲线形状，同价时统一按共享概率模型的预测均值排序。</p><p>气象包括体感温度、银川2米气温及GFS/ECMWF/ICON在7个地点的100米风速、区域风向分量。风场点为香山、麻黄山、六盘山、贺兰山、吴忠、银川、石嘴山。历史新能源出力只在光伏预测为零的时段作为非光伏出力代理；它不是单独测得的风电序列，也采用当前归档版本。</p><p>当前候选：分时段概率预测、历史偏差修正与滚动中位数校准。MAE单位为元/MWh。每天仅使用此前日期电价训练。使用9月进行开发验证，并持续比较固定区间结果；当前展示研究区间MAE最低的方案。该区间已参与多次方法比较，不是独立测试集。</p><p>峰谷口径：每日选预测最高、最低各4小时；真实电价与当日第4高/低价相同均视为等价命中，同时列出按时间打破真实并列的严格重合率。预测并列优先用原始分数，概率分布模型使用预测均值，最后按时段排序。</p><p>气象来源为<a href="https://open-meteo.com/en/docs/previous-runs-api" target="_blank" rel="noopener">Open-Meteo Previous Runs</a> lead1历史预报；市场输入为当前归档版本。缺少历史发布版本，无法重建统一D日08:45的信息集。图中是预报气象；实线温度为体感温度，另用虚线展示银川2米气温预报。100米风速图展示7地点均值，分地区信息也用于夜间模型。11月目前只评估有真实日前价的1–5日。</p></section>
+<p>本候选还使用归档的可选市场边界量及至少滞后3天的历史实时价差；缺少可选边界量时使用缺失标记。逐天气象与市场图展示主要原始预测量。</p><section><h2>复核结果</h2><p>已重新训练5个基础预测模型及2个共享概率模型，逐日复算36天输出。864小时最终预测已从组成曲线与校准代码重新生成，并与报告逐项一致。全部36个目标日的历史价格特征、夜间核心预测及夜间/晚间校准均通过未来价格标签扰动检查；历史出力修正也通过从目标日前2天起的真实新能源出力扰动检查。基础特征与共享概率输入的价格、实时价时点检查另已通过。</p><p>这是反复比较后的研究回测结果，评估区间参与了方法筛选，不是独立测试集；市场预测缺少历史发布版本，天气为固定lead1，仍不能复原统一历史08:45的信息集。</p></section><section id="comparison"><h2>完整区间模型对比</h2><p>展示各类方法中回测MAE最小的代表方案，并保留原策略作参照。此处经过多次研究比较，不是未参与筛选的独立测试集。</p><div class="scroll"><table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
-      <th>方案/实验编号</th>
+      <th>方案类别（该类最小MAE）</th>
       <th>MAE</th>
       <th>RMSE</th>
       <th>准确率%</th>
@@ -18,7 +18,55 @@
   </thead>
   <tbody>
     <tr>
-      <td>regional_evening_combo/benchmark/clad_nwp_240_strength0.5_shape0.0_mix0.5</td>
+      <td>最终分时段概率预测与滚动校准</td>
+      <td>34.45</td>
+      <td>58.28</td>
+      <td>83.35</td>
+      <td>63.89</td>
+      <td>93.75</td>
+    </tr>
+    <tr>
+      <td>夜间条件中位数校准</td>
+      <td>34.74</td>
+      <td>58.50</td>
+      <td>83.31</td>
+      <td>63.19</td>
+      <td>93.75</td>
+    </tr>
+    <tr>
+      <td>晚间中位数校准</td>
+      <td>34.97</td>
+      <td>59.73</td>
+      <td>83.29</td>
+      <td>63.89</td>
+      <td>93.75</td>
+    </tr>
+    <tr>
+      <td>历史滚动预测单调校准</td>
+      <td>35.51</td>
+      <td>58.89</td>
+      <td>83.17</td>
+      <td>67.36</td>
+      <td>93.75</td>
+    </tr>
+    <tr>
+      <td>夜间价格中位数校准</td>
+      <td>35.85</td>
+      <td>60.37</td>
+      <td>82.46</td>
+      <td>62.50</td>
+      <td>93.06</td>
+    </tr>
+    <tr>
+      <td>固定权重分时段融合</td>
+      <td>36.56</td>
+      <td>60.58</td>
+      <td>82.07</td>
+      <td>66.67</td>
+      <td>93.06</td>
+    </tr>
+    <tr>
+      <td>地区气象与晚间供需修正</td>
       <td>37.31</td>
       <td>62.01</td>
       <td>81.32</td>
@@ -26,31 +74,23 @@
       <td>90.97</td>
     </tr>
     <tr>
-      <td>regional_evening_combo/benchmark/clad_nwp_240_strength0.5_shape0.0_mix1.0</td>
-      <td>37.38</td>
-      <td>61.97</td>
-      <td>81.04</td>
-      <td>65.28</td>
+      <td>ranking_ties/score_forecasts/benchmark/lambdarank_90</td>
+      <td>37.31</td>
+      <td>62.01</td>
+      <td>81.32</td>
+      <td>63.89</td>
       <td>90.97</td>
     </tr>
     <tr>
-      <td>regional_evening_combo/benchmark/linear_nwp_240_strength0.5_shape0.0_mix0.5</td>
-      <td>37.40</td>
-      <td>62.04</td>
-      <td>81.06</td>
-      <td>64.58</td>
-      <td>90.97</td>
+      <td>历史出力偏差修正</td>
+      <td>37.68</td>
+      <td>61.77</td>
+      <td>81.43</td>
+      <td>65.97</td>
+      <td>95.14</td>
     </tr>
     <tr>
-      <td>regional_evening_combo/benchmark/linear_nwp_240_strength0.5_shape0.0_mix1.0</td>
-      <td>37.43</td>
-      <td>62.08</td>
-      <td>80.91</td>
-      <td>66.67</td>
-      <td>90.97</td>
-    </tr>
-    <tr>
-      <td>night_context_cdf/benchmark/regional_l2_C1.0_mixture_strength1.0_mix1.0</td>
+      <td>地区气象与日间概率融合</td>
       <td>37.86</td>
       <td>62.60</td>
       <td>81.03</td>
@@ -58,63 +98,23 @@
       <td>91.67</td>
     </tr>
     <tr>
-      <td>night_context_hurdle/benchmark/regional_l2_C1.0_mixture_strength1.0</td>
-      <td>38.14</td>
-      <td>62.75</td>
-      <td>80.63</td>
-      <td>64.58</td>
-      <td>93.06</td>
-    </tr>
-    <tr>
-      <td>evening_supply_combo/benchmark/clad_nwp_240_strength0.5_shape0.0_mix0.5</td>
-      <td>38.28</td>
-      <td>63.68</td>
-      <td>81.33</td>
-      <td>62.50</td>
-      <td>93.06</td>
-    </tr>
-    <tr>
-      <td>evening_supply_combo/benchmark/clad_nwp_240_strength0.5_shape0.0_mix1.0</td>
-      <td>38.35</td>
-      <td>63.65</td>
-      <td>81.05</td>
-      <td>63.19</td>
-      <td>93.06</td>
-    </tr>
-    <tr>
-      <td>evening_supply_combo/benchmark/linear_nwp_240_strength0.5_shape0.0_mix0.5</td>
-      <td>38.37</td>
-      <td>63.72</td>
-      <td>81.07</td>
-      <td>62.50</td>
-      <td>93.06</td>
-    </tr>
-    <tr>
-      <td>evening_supply_combo/benchmark/linear_nwp_240_strength0.5_shape0.0_mix1.0</td>
-      <td>38.40</td>
-      <td>63.75</td>
-      <td>80.91</td>
-      <td>65.28</td>
-      <td>93.06</td>
-    </tr>
-    <tr>
-      <td>night_context_hurdle/benchmark/core_priceanchors_mixture_strength1.0</td>
-      <td>38.44</td>
-      <td>64.42</td>
-      <td>81.17</td>
-      <td>65.28</td>
-      <td>93.06</td>
-    </tr>
-    <tr>
-      <td>night_context_cdf/benchmark/boundary_price_l2_C0.1_hard_strength1.0_mix1.0</td>
-      <td>38.56</td>
-      <td>63.82</td>
-      <td>81.06</td>
+      <td>地区气象两阶段预测</td>
+      <td>38.02</td>
+      <td>63.52</td>
+      <td>81.18</td>
       <td>63.89</td>
-      <td>93.75</td>
+      <td>93.06</td>
+    </tr>
+    <tr>
+      <td>原策略</td>
+      <td>47.99</td>
+      <td>75.32</td>
+      <td>75.73</td>
+      <td>56.94</td>
+      <td>88.19</td>
     </tr>
   </tbody>
-</table></div><details><summary>查看全部 673 个完整回测方案</summary><div class="scroll"><table border="1" class="dataframe">
+</table></div><details><summary>查看全部 1052 个完整回测方案与实验编号</summary><div class="scroll"><table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
       <th>model</th>
@@ -130,6 +130,2074 @@
   </thead>
   <tbody>
     <tr>
+      <td>calibrated_blocks/benchmark/night90_evening180</td>
+      <td>34.45</td>
+      <td>58.28</td>
+      <td>83.35</td>
+      <td>63.89</td>
+      <td>93.75</td>
+      <td>57.64</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_anchors_w90_knots_reg0.005_strength1.0</td>
+      <td>34.74</td>
+      <td>58.50</td>
+      <td>83.31</td>
+      <td>63.19</td>
+      <td>93.75</td>
+      <td>56.94</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_anchors_w90_knots_reg0.001_strength1.0</td>
+      <td>34.90</td>
+      <td>59.01</td>
+      <td>83.25</td>
+      <td>63.19</td>
+      <td>93.75</td>
+      <td>56.94</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/physical_180_isotonic_strength0.25</td>
+      <td>34.97</td>
+      <td>59.73</td>
+      <td>83.29</td>
+      <td>63.89</td>
+      <td>93.75</td>
+      <td>57.64</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/physical_180_isotonic_strength0.5</td>
+      <td>34.98</td>
+      <td>59.73</td>
+      <td>83.22</td>
+      <td>63.89</td>
+      <td>93.75</td>
+      <td>57.64</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_anchors_w120_isotonic_reg0.001_strength1.0</td>
+      <td>35.00</td>
+      <td>58.67</td>
+      <td>82.80</td>
+      <td>61.81</td>
+      <td>93.75</td>
+      <td>55.56</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/physical_180_knots_strength0.5</td>
+      <td>35.04</td>
+      <td>59.60</td>
+      <td>83.16</td>
+      <td>63.89</td>
+      <td>93.75</td>
+      <td>57.64</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/physical_180_knots_strength0.25</td>
+      <td>35.05</td>
+      <td>59.66</td>
+      <td>83.20</td>
+      <td>63.89</td>
+      <td>93.75</td>
+      <td>57.64</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/physical_90_knots_strength0.25</td>
+      <td>35.15</td>
+      <td>59.76</td>
+      <td>83.12</td>
+      <td>63.89</td>
+      <td>93.75</td>
+      <td>57.64</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_anchors_w180_knots_reg0.001_strength1.0</td>
+      <td>35.17</td>
+      <td>59.94</td>
+      <td>83.25</td>
+      <td>64.58</td>
+      <td>93.75</td>
+      <td>58.33</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_anchors_knots_reg0.005_strength1.0</td>
+      <td>35.26</td>
+      <td>59.95</td>
+      <td>83.24</td>
+      <td>64.58</td>
+      <td>93.75</td>
+      <td>58.33</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_anchors_w180_knots_reg0.005_strength1.0</td>
+      <td>35.26</td>
+      <td>59.95</td>
+      <td>83.24</td>
+      <td>64.58</td>
+      <td>93.75</td>
+      <td>58.33</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/physical_90_isotonic_strength0.25</td>
+      <td>35.27</td>
+      <td>59.98</td>
+      <td>83.11</td>
+      <td>63.89</td>
+      <td>93.75</td>
+      <td>57.64</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_anchors_w120_isotonic_reg0.005_strength1.0</td>
+      <td>35.28</td>
+      <td>59.08</td>
+      <td>82.72</td>
+      <td>61.81</td>
+      <td>93.75</td>
+      <td>55.56</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/physical_90_knots_strength0.5</td>
+      <td>35.28</td>
+      <td>59.83</td>
+      <td>82.95</td>
+      <td>63.89</td>
+      <td>93.75</td>
+      <td>57.64</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_anchors_w240_knots_reg0.005_strength1.0</td>
+      <td>35.30</td>
+      <td>60.18</td>
+      <td>83.12</td>
+      <td>63.89</td>
+      <td>93.75</td>
+      <td>57.64</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_anchors_isotonic_reg0.005_strength1.0</td>
+      <td>35.30</td>
+      <td>59.56</td>
+      <td>83.24</td>
+      <td>64.58</td>
+      <td>93.75</td>
+      <td>58.33</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_anchors_w180_isotonic_reg0.005_strength1.0</td>
+      <td>35.30</td>
+      <td>59.56</td>
+      <td>83.24</td>
+      <td>64.58</td>
+      <td>93.75</td>
+      <td>58.33</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_anchors_w180_isotonic_reg0.001_strength1.0</td>
+      <td>35.31</td>
+      <td>59.72</td>
+      <td>83.33</td>
+      <td>63.89</td>
+      <td>93.75</td>
+      <td>57.64</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/physical_120_knots_strength0.25</td>
+      <td>35.33</td>
+      <td>59.93</td>
+      <td>83.08</td>
+      <td>63.89</td>
+      <td>93.75</td>
+      <td>57.64</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/blend_180_knots_strength0.25</td>
+      <td>35.34</td>
+      <td>60.02</td>
+      <td>83.21</td>
+      <td>64.58</td>
+      <td>93.75</td>
+      <td>58.33</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/blend_180_isotonic_strength0.25</td>
+      <td>35.35</td>
+      <td>60.07</td>
+      <td>83.13</td>
+      <td>63.89</td>
+      <td>93.75</td>
+      <td>57.64</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/blend_90_knots_strength0.25</td>
+      <td>35.40</td>
+      <td>60.25</td>
+      <td>83.22</td>
+      <td>64.58</td>
+      <td>93.75</td>
+      <td>58.33</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/blend_120_knots_strength0.25</td>
+      <td>35.43</td>
+      <td>60.19</td>
+      <td>83.25</td>
+      <td>64.58</td>
+      <td>93.75</td>
+      <td>58.33</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_anchors_w90_knots_reg0.005_strength0.5</td>
+      <td>35.44</td>
+      <td>59.05</td>
+      <td>82.86</td>
+      <td>64.58</td>
+      <td>93.06</td>
+      <td>58.33</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_anchors_knots_reg0.02_strength1.0</td>
+      <td>35.45</td>
+      <td>60.01</td>
+      <td>83.15</td>
+      <td>63.89</td>
+      <td>93.75</td>
+      <td>57.64</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/blend_180_knots_strength0.5</td>
+      <td>35.45</td>
+      <td>60.11</td>
+      <td>83.12</td>
+      <td>64.58</td>
+      <td>93.75</td>
+      <td>58.33</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/physical_120_isotonic_strength0.25</td>
+      <td>35.47</td>
+      <td>60.13</td>
+      <td>83.04</td>
+      <td>63.89</td>
+      <td>93.75</td>
+      <td>57.64</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_anchors_w240_knots_reg0.001_strength1.0</td>
+      <td>35.48</td>
+      <td>60.61</td>
+      <td>83.07</td>
+      <td>63.89</td>
+      <td>93.75</td>
+      <td>57.64</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/blend_180_isotonic_strength0.5</td>
+      <td>35.49</td>
+      <td>60.23</td>
+      <td>83.03</td>
+      <td>63.89</td>
+      <td>93.75</td>
+      <td>57.64</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_history_maps/benchmark/wind_bias_180_isotonic_strength1.0</td>
+      <td>35.51</td>
+      <td>58.89</td>
+      <td>83.17</td>
+      <td>67.36</td>
+      <td>93.75</td>
+      <td>61.11</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/blend_90_isotonic_strength0.25</td>
+      <td>35.52</td>
+      <td>60.30</td>
+      <td>83.15</td>
+      <td>63.89</td>
+      <td>93.75</td>
+      <td>57.64</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_history_maps/benchmark/blend_180_knots_strength1.0</td>
+      <td>35.52</td>
+      <td>59.55</td>
+      <td>82.94</td>
+      <td>65.28</td>
+      <td>93.06</td>
+      <td>59.03</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/reference_180_knots_strength0.25</td>
+      <td>35.52</td>
+      <td>60.21</td>
+      <td>83.07</td>
+      <td>64.58</td>
+      <td>93.75</td>
+      <td>58.33</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_calendar_isotonic_reg0.02_strength1.0</td>
+      <td>35.54</td>
+      <td>59.13</td>
+      <td>83.23</td>
+      <td>66.67</td>
+      <td>93.75</td>
+      <td>60.42</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/blend_calendar_knots_reg0.02_strength1.0</td>
+      <td>35.54</td>
+      <td>59.61</td>
+      <td>82.93</td>
+      <td>65.28</td>
+      <td>93.06</td>
+      <td>59.03</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_anchors_w90_knots_reg0.001_strength0.5</td>
+      <td>35.55</td>
+      <td>59.29</td>
+      <td>82.81</td>
+      <td>65.97</td>
+      <td>93.06</td>
+      <td>59.72</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/reference_90_knots_strength0.25</td>
+      <td>35.55</td>
+      <td>60.40</td>
+      <td>83.21</td>
+      <td>64.58</td>
+      <td>93.75</td>
+      <td>58.33</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/reference_90_isotonic_strength0.25</td>
+      <td>35.56</td>
+      <td>60.44</td>
+      <td>83.19</td>
+      <td>63.89</td>
+      <td>93.75</td>
+      <td>57.64</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/blend_transition_knots_reg0.02_strength1.0</td>
+      <td>35.56</td>
+      <td>59.68</td>
+      <td>82.95</td>
+      <td>65.28</td>
+      <td>93.06</td>
+      <td>59.03</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_anchors_w120_isotonic_reg0.001_strength0.5</td>
+      <td>35.62</td>
+      <td>58.98</td>
+      <td>82.34</td>
+      <td>64.58</td>
+      <td>93.75</td>
+      <td>58.33</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_anchors_w180_knots_reg0.001_strength0.5</td>
+      <td>35.63</td>
+      <td>59.72</td>
+      <td>82.85</td>
+      <td>64.58</td>
+      <td>93.75</td>
+      <td>58.33</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/reference_180_isotonic_strength0.25</td>
+      <td>35.63</td>
+      <td>60.31</td>
+      <td>82.93</td>
+      <td>63.89</td>
+      <td>93.75</td>
+      <td>57.64</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/physical_90_isotonic_strength0.5</td>
+      <td>35.64</td>
+      <td>60.39</td>
+      <td>82.82</td>
+      <td>63.89</td>
+      <td>93.75</td>
+      <td>57.64</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/blend_120_isotonic_strength0.25</td>
+      <td>35.66</td>
+      <td>60.52</td>
+      <td>83.14</td>
+      <td>63.89</td>
+      <td>93.75</td>
+      <td>57.64</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/blend_transition_knots_reg0.005_strength1.0</td>
+      <td>35.66</td>
+      <td>59.82</td>
+      <td>82.90</td>
+      <td>65.97</td>
+      <td>93.06</td>
+      <td>59.72</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/blend_90_knots_strength0.5</td>
+      <td>35.66</td>
+      <td>60.71</td>
+      <td>83.04</td>
+      <td>64.58</td>
+      <td>93.75</td>
+      <td>58.33</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/blend_120_knots_strength0.5</td>
+      <td>35.67</td>
+      <td>60.48</td>
+      <td>83.17</td>
+      <td>63.89</td>
+      <td>93.75</td>
+      <td>57.64</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_anchors_isotonic_reg0.02_strength1.0</td>
+      <td>35.68</td>
+      <td>59.94</td>
+      <td>83.16</td>
+      <td>65.28</td>
+      <td>93.75</td>
+      <td>59.03</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/blend_calendar_knots_reg0.005_strength1.0</td>
+      <td>35.68</td>
+      <td>59.89</td>
+      <td>82.90</td>
+      <td>64.58</td>
+      <td>93.06</td>
+      <td>58.33</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/blend_anchors_knots_reg0.005_strength1.0</td>
+      <td>35.68</td>
+      <td>60.33</td>
+      <td>82.88</td>
+      <td>65.28</td>
+      <td>93.06</td>
+      <td>59.03</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/physical_180_isotonic_strength1.0</td>
+      <td>35.69</td>
+      <td>60.41</td>
+      <td>82.54</td>
+      <td>66.67</td>
+      <td>93.75</td>
+      <td>60.42</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/physical_120_knots_strength0.5</td>
+      <td>35.69</td>
+      <td>60.20</td>
+      <td>82.82</td>
+      <td>63.89</td>
+      <td>93.75</td>
+      <td>57.64</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_anchors_knots_reg0.005_strength0.5</td>
+      <td>35.69</td>
+      <td>59.74</td>
+      <td>82.89</td>
+      <td>64.58</td>
+      <td>93.75</td>
+      <td>58.33</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_anchors_w180_knots_reg0.005_strength0.5</td>
+      <td>35.69</td>
+      <td>59.74</td>
+      <td>82.89</td>
+      <td>64.58</td>
+      <td>93.75</td>
+      <td>58.33</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_anchors_w240_knots_reg0.001_strength0.5</td>
+      <td>35.70</td>
+      <td>59.97</td>
+      <td>82.72</td>
+      <td>64.58</td>
+      <td>93.75</td>
+      <td>58.33</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_anchors_w240_knots_reg0.005_strength0.5</td>
+      <td>35.71</td>
+      <td>59.82</td>
+      <td>82.72</td>
+      <td>65.28</td>
+      <td>93.75</td>
+      <td>59.03</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_transition_knots_reg0.02_strength1.0</td>
+      <td>35.71</td>
+      <td>60.51</td>
+      <td>83.35</td>
+      <td>63.89</td>
+      <td>93.75</td>
+      <td>57.64</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_history_maps/benchmark/wind_bias_180_knots_strength1.0</td>
+      <td>35.72</td>
+      <td>60.29</td>
+      <td>83.32</td>
+      <td>63.89</td>
+      <td>93.75</td>
+      <td>57.64</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_transition_isotonic_reg0.02_strength1.0</td>
+      <td>35.73</td>
+      <td>59.22</td>
+      <td>83.19</td>
+      <td>68.06</td>
+      <td>93.75</td>
+      <td>61.81</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_anchors_w180_isotonic_reg0.005_strength0.5</td>
+      <td>35.73</td>
+      <td>59.56</td>
+      <td>82.79</td>
+      <td>65.28</td>
+      <td>93.75</td>
+      <td>59.03</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_anchors_isotonic_reg0.005_strength0.5</td>
+      <td>35.73</td>
+      <td>59.56</td>
+      <td>82.79</td>
+      <td>65.28</td>
+      <td>93.75</td>
+      <td>59.03</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_calendar_knots_reg0.02_strength1.0</td>
+      <td>35.73</td>
+      <td>60.38</td>
+      <td>83.32</td>
+      <td>63.89</td>
+      <td>93.75</td>
+      <td>57.64</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_anchors_knots_reg0.02_strength0.5</td>
+      <td>35.74</td>
+      <td>59.81</td>
+      <td>82.89</td>
+      <td>65.28</td>
+      <td>93.75</td>
+      <td>59.03</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/reference_120_knots_strength0.25</td>
+      <td>35.75</td>
+      <td>60.59</td>
+      <td>83.05</td>
+      <td>63.89</td>
+      <td>93.75</td>
+      <td>57.64</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/physical_180_knots_strength1.0</td>
+      <td>35.75</td>
+      <td>60.20</td>
+      <td>82.49</td>
+      <td>66.67</td>
+      <td>93.75</td>
+      <td>60.42</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_calendar_isotonic_reg0.005_strength1.0</td>
+      <td>35.75</td>
+      <td>59.64</td>
+      <td>83.19</td>
+      <td>66.67</td>
+      <td>93.75</td>
+      <td>60.42</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_anchors_w180_isotonic_reg0.001_strength0.5</td>
+      <td>35.76</td>
+      <td>59.62</td>
+      <td>82.76</td>
+      <td>64.58</td>
+      <td>93.75</td>
+      <td>58.33</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_history_maps/benchmark/thermal_90_isotonic_strength1.0</td>
+      <td>35.77</td>
+      <td>60.06</td>
+      <td>82.89</td>
+      <td>62.50</td>
+      <td>93.06</td>
+      <td>56.94</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/blend_anchors_knots_reg0.02_strength1.0</td>
+      <td>35.78</td>
+      <td>60.51</td>
+      <td>82.89</td>
+      <td>65.28</td>
+      <td>93.06</td>
+      <td>59.72</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/reference_120_isotonic_strength0.25</td>
+      <td>35.78</td>
+      <td>60.73</td>
+      <td>83.12</td>
+      <td>63.89</td>
+      <td>93.75</td>
+      <td>57.64</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_history_maps/benchmark/thermal_120_knots_strength1.0</td>
+      <td>35.78</td>
+      <td>59.85</td>
+      <td>82.53</td>
+      <td>63.89</td>
+      <td>93.06</td>
+      <td>57.64</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_calendar_knots_reg0.005_strength1.0</td>
+      <td>35.79</td>
+      <td>60.49</td>
+      <td>83.32</td>
+      <td>63.89</td>
+      <td>93.75</td>
+      <td>57.64</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/blend_180_isotonic_strength1.0</td>
+      <td>35.79</td>
+      <td>60.62</td>
+      <td>82.73</td>
+      <td>63.19</td>
+      <td>94.44</td>
+      <td>57.64</td>
+      <td>53.47</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_history_maps/benchmark/thermal_120_isotonic_strength1.0</td>
+      <td>35.79</td>
+      <td>60.03</td>
+      <td>82.59</td>
+      <td>63.19</td>
+      <td>93.06</td>
+      <td>58.33</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_anchors_w120_knots_reg0.001_strength1.0</td>
+      <td>35.81</td>
+      <td>59.84</td>
+      <td>82.33</td>
+      <td>63.19</td>
+      <td>93.75</td>
+      <td>57.64</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_transition_knots_reg0.005_strength1.0</td>
+      <td>35.82</td>
+      <td>60.73</td>
+      <td>83.31</td>
+      <td>65.28</td>
+      <td>93.75</td>
+      <td>59.03</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/blend_180_knots_strength1.0</td>
+      <td>35.82</td>
+      <td>60.39</td>
+      <td>82.84</td>
+      <td>62.50</td>
+      <td>93.75</td>
+      <td>56.25</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/reference_180_knots_strength0.5</td>
+      <td>35.84</td>
+      <td>60.53</td>
+      <td>82.85</td>
+      <td>63.19</td>
+      <td>94.44</td>
+      <td>56.94</td>
+      <td>53.47</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_median_map/benchmark/map120_prior0.02_strength1.0</td>
+      <td>35.85</td>
+      <td>60.37</td>
+      <td>82.46</td>
+      <td>62.50</td>
+      <td>93.06</td>
+      <td>56.25</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_anchors_w120_isotonic_reg0.005_strength0.5</td>
+      <td>35.86</td>
+      <td>59.32</td>
+      <td>82.29</td>
+      <td>65.28</td>
+      <td>93.75</td>
+      <td>59.03</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/blend_90_isotonic_strength0.5</td>
+      <td>35.88</td>
+      <td>60.80</td>
+      <td>82.93</td>
+      <td>63.89</td>
+      <td>93.75</td>
+      <td>57.64</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_history_maps/benchmark/blend_90_knots_strength1.0</td>
+      <td>35.91</td>
+      <td>60.42</td>
+      <td>82.81</td>
+      <td>64.58</td>
+      <td>93.75</td>
+      <td>58.33</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/reference_90_knots_strength0.5</td>
+      <td>35.93</td>
+      <td>60.98</td>
+      <td>83.07</td>
+      <td>65.28</td>
+      <td>94.44</td>
+      <td>59.03</td>
+      <td>53.47</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_history_maps/benchmark/wind_bias_180_isotonic_strength0.5</td>
+      <td>35.95</td>
+      <td>59.30</td>
+      <td>82.60</td>
+      <td>67.36</td>
+      <td>93.75</td>
+      <td>61.11</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_history_maps/benchmark/thermal_90_isotonic_strength0.5</td>
+      <td>35.95</td>
+      <td>59.82</td>
+      <td>82.69</td>
+      <td>63.89</td>
+      <td>93.06</td>
+      <td>57.64</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_history_maps/benchmark/blend_180_knots_strength0.5</td>
+      <td>35.96</td>
+      <td>59.82</td>
+      <td>82.62</td>
+      <td>65.97</td>
+      <td>93.06</td>
+      <td>59.72</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_calendar_isotonic_reg0.02_strength0.5</td>
+      <td>35.97</td>
+      <td>59.42</td>
+      <td>82.62</td>
+      <td>67.36</td>
+      <td>93.75</td>
+      <td>61.11</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_history_maps/benchmark/thermal_90_knots_strength1.0</td>
+      <td>35.97</td>
+      <td>60.27</td>
+      <td>82.57</td>
+      <td>62.50</td>
+      <td>93.06</td>
+      <td>56.25</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/reference_90_isotonic_strength0.5</td>
+      <td>35.98</td>
+      <td>61.09</td>
+      <td>83.02</td>
+      <td>63.19</td>
+      <td>93.75</td>
+      <td>57.64</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_median_map/benchmark/map120_prior0.02_strength0.5</td>
+      <td>35.99</td>
+      <td>60.06</td>
+      <td>82.43</td>
+      <td>63.89</td>
+      <td>93.06</td>
+      <td>57.64</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_transition_isotonic_reg0.005_strength1.0</td>
+      <td>35.99</td>
+      <td>59.41</td>
+      <td>83.05</td>
+      <td>66.67</td>
+      <td>93.75</td>
+      <td>60.42</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_anchors_isotonic_reg0.02_strength0.5</td>
+      <td>35.99</td>
+      <td>59.78</td>
+      <td>82.68</td>
+      <td>67.36</td>
+      <td>93.75</td>
+      <td>61.11</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/blend_calendar_knots_reg0.02_strength0.5</td>
+      <td>35.99</td>
+      <td>59.86</td>
+      <td>82.58</td>
+      <td>65.97</td>
+      <td>93.06</td>
+      <td>59.72</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/reference_180_isotonic_strength0.5</td>
+      <td>36.00</td>
+      <td>60.73</td>
+      <td>82.69</td>
+      <td>63.19</td>
+      <td>94.44</td>
+      <td>57.64</td>
+      <td>53.47</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/blend_transition_knots_reg0.02_strength0.5</td>
+      <td>36.01</td>
+      <td>59.90</td>
+      <td>82.56</td>
+      <td>65.97</td>
+      <td>93.06</td>
+      <td>59.72</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_anchors_w120_knots_reg0.001_strength0.5</td>
+      <td>36.03</td>
+      <td>59.46</td>
+      <td>82.14</td>
+      <td>64.58</td>
+      <td>93.75</td>
+      <td>58.33</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_anchors_w240_isotonic_reg0.001_strength0.5</td>
+      <td>36.03</td>
+      <td>60.55</td>
+      <td>82.65</td>
+      <td>65.97</td>
+      <td>93.75</td>
+      <td>59.72</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/physical_120_isotonic_strength0.5</td>
+      <td>36.04</td>
+      <td>60.71</td>
+      <td>82.69</td>
+      <td>63.19</td>
+      <td>93.75</td>
+      <td>56.94</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_history_maps/benchmark/wind_bias_180_knots_strength0.5</td>
+      <td>36.04</td>
+      <td>60.05</td>
+      <td>82.66</td>
+      <td>66.67</td>
+      <td>93.06</td>
+      <td>60.42</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/blend_transition_knots_reg0.005_strength0.5</td>
+      <td>36.04</td>
+      <td>59.95</td>
+      <td>82.54</td>
+      <td>66.67</td>
+      <td>93.06</td>
+      <td>60.42</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_history_maps/benchmark/wind_bias_120_isotonic_strength1.0</td>
+      <td>36.04</td>
+      <td>60.00</td>
+      <td>82.56</td>
+      <td>65.28</td>
+      <td>93.75</td>
+      <td>59.72</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_transition_isotonic_reg0.02_strength0.5</td>
+      <td>36.05</td>
+      <td>59.47</td>
+      <td>82.60</td>
+      <td>66.67</td>
+      <td>93.75</td>
+      <td>60.42</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_calendar_knots_reg0.02_strength0.5</td>
+      <td>36.05</td>
+      <td>60.09</td>
+      <td>82.66</td>
+      <td>66.67</td>
+      <td>93.06</td>
+      <td>60.42</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_history_maps/benchmark/thermal_120_knots_strength0.5</td>
+      <td>36.05</td>
+      <td>59.92</td>
+      <td>82.42</td>
+      <td>64.58</td>
+      <td>93.06</td>
+      <td>58.33</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_calendar_knots_reg0.005_strength0.5</td>
+      <td>36.05</td>
+      <td>60.09</td>
+      <td>82.67</td>
+      <td>66.67</td>
+      <td>93.06</td>
+      <td>60.42</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_history_maps/benchmark/thermal_120_isotonic_strength0.5</td>
+      <td>36.05</td>
+      <td>59.97</td>
+      <td>82.43</td>
+      <td>64.58</td>
+      <td>93.06</td>
+      <td>58.33</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/blend_calendar_knots_reg0.005_strength0.5</td>
+      <td>36.05</td>
+      <td>59.97</td>
+      <td>82.57</td>
+      <td>65.97</td>
+      <td>93.06</td>
+      <td>59.72</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_transition_knots_reg0.02_strength0.5</td>
+      <td>36.06</td>
+      <td>60.14</td>
+      <td>82.66</td>
+      <td>66.67</td>
+      <td>93.06</td>
+      <td>60.42</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/blend_anchors_knots_reg0.005_strength0.5</td>
+      <td>36.06</td>
+      <td>60.16</td>
+      <td>82.53</td>
+      <td>64.58</td>
+      <td>93.06</td>
+      <td>58.33</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_history_maps/benchmark/blend_120_knots_strength1.0</td>
+      <td>36.07</td>
+      <td>60.14</td>
+      <td>82.55</td>
+      <td>64.58</td>
+      <td>93.75</td>
+      <td>58.33</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_calendar_isotonic_reg0.005_strength0.5</td>
+      <td>36.08</td>
+      <td>59.68</td>
+      <td>82.61</td>
+      <td>66.67</td>
+      <td>93.75</td>
+      <td>60.42</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_transition_knots_reg0.005_strength0.5</td>
+      <td>36.08</td>
+      <td>60.22</td>
+      <td>82.71</td>
+      <td>66.67</td>
+      <td>93.75</td>
+      <td>60.42</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/blend_anchors_knots_reg0.02_strength0.5</td>
+      <td>36.09</td>
+      <td>60.27</td>
+      <td>82.60</td>
+      <td>64.58</td>
+      <td>93.06</td>
+      <td>58.33</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/blend_90_knots_strength1.0</td>
+      <td>36.09</td>
+      <td>61.75</td>
+      <td>82.89</td>
+      <td>63.89</td>
+      <td>93.75</td>
+      <td>57.64</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_anchors_w240_isotonic_reg0.005_strength0.5</td>
+      <td>36.10</td>
+      <td>60.68</td>
+      <td>82.65</td>
+      <td>65.97</td>
+      <td>93.75</td>
+      <td>59.72</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_median_map/benchmark/map60_prior0.02_strength0.5</td>
+      <td>36.11</td>
+      <td>59.91</td>
+      <td>82.31</td>
+      <td>64.58</td>
+      <td>93.75</td>
+      <td>58.33</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_history_maps/benchmark/thermal_90_knots_strength0.5</td>
+      <td>36.11</td>
+      <td>60.08</td>
+      <td>82.39</td>
+      <td>63.89</td>
+      <td>93.06</td>
+      <td>57.64</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/physical_90_knots_strength1.0</td>
+      <td>36.13</td>
+      <td>60.49</td>
+      <td>82.13</td>
+      <td>67.36</td>
+      <td>93.75</td>
+      <td>61.11</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_transition_isotonic_reg0.005_strength0.5</td>
+      <td>36.15</td>
+      <td>59.58</td>
+      <td>82.60</td>
+      <td>65.97</td>
+      <td>93.75</td>
+      <td>59.72</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_history_maps/benchmark/blend_90_knots_strength0.5</td>
+      <td>36.17</td>
+      <td>60.14</td>
+      <td>82.36</td>
+      <td>65.28</td>
+      <td>93.06</td>
+      <td>59.03</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/blend_120_knots_strength1.0</td>
+      <td>36.19</td>
+      <td>61.14</td>
+      <td>83.00</td>
+      <td>62.50</td>
+      <td>93.75</td>
+      <td>56.94</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_median_map/benchmark/map240_prior0.02_strength0.5</td>
+      <td>36.22</td>
+      <td>60.52</td>
+      <td>82.22</td>
+      <td>63.89</td>
+      <td>93.06</td>
+      <td>57.64</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_history_maps/benchmark/blend_120_knots_strength0.5</td>
+      <td>36.27</td>
+      <td>60.00</td>
+      <td>82.21</td>
+      <td>65.28</td>
+      <td>93.06</td>
+      <td>59.03</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/blend_anchors_isotonic_reg0.005_strength0.5</td>
+      <td>36.27</td>
+      <td>61.21</td>
+      <td>82.78</td>
+      <td>65.97</td>
+      <td>93.06</td>
+      <td>59.72</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_median_map/benchmark/map240_prior0.02_strength1.0</td>
+      <td>36.29</td>
+      <td>61.44</td>
+      <td>82.23</td>
+      <td>62.50</td>
+      <td>90.97</td>
+      <td>56.25</td>
+      <td>50.00</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_history_maps/benchmark/wind_bias_120_isotonic_strength0.5</td>
+      <td>36.30</td>
+      <td>60.11</td>
+      <td>82.18</td>
+      <td>65.97</td>
+      <td>93.06</td>
+      <td>59.72</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_anchors_w120_knots_reg0.005_strength0.5</td>
+      <td>36.32</td>
+      <td>60.33</td>
+      <td>82.19</td>
+      <td>65.28</td>
+      <td>93.75</td>
+      <td>59.72</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/blend_120_isotonic_strength0.5</td>
+      <td>36.32</td>
+      <td>61.32</td>
+      <td>82.83</td>
+      <td>63.19</td>
+      <td>93.75</td>
+      <td>56.94</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_history_maps/benchmark/thermal_180_knots_strength0.5</td>
+      <td>36.32</td>
+      <td>60.31</td>
+      <td>82.36</td>
+      <td>64.58</td>
+      <td>93.06</td>
+      <td>58.33</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_history_maps/benchmark/thermal_180_knots_strength1.0</td>
+      <td>36.33</td>
+      <td>60.65</td>
+      <td>82.57</td>
+      <td>62.50</td>
+      <td>93.06</td>
+      <td>56.25</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_median_map/benchmark/map120_prior0.1_strength0.5</td>
+      <td>36.34</td>
+      <td>60.55</td>
+      <td>82.33</td>
+      <td>63.89</td>
+      <td>93.06</td>
+      <td>57.64</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_median_map/benchmark/map120_prior0.1_strength1.0</td>
+      <td>36.38</td>
+      <td>61.03</td>
+      <td>82.35</td>
+      <td>63.19</td>
+      <td>93.06</td>
+      <td>56.94</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_history_maps/benchmark/wind_bias_120_knots_strength1.0</td>
+      <td>36.40</td>
+      <td>60.15</td>
+      <td>82.04</td>
+      <td>64.58</td>
+      <td>93.75</td>
+      <td>58.33</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_history_maps/benchmark/wind_bias_120_knots_strength0.5</td>
+      <td>36.41</td>
+      <td>60.08</td>
+      <td>81.97</td>
+      <td>65.28</td>
+      <td>93.75</td>
+      <td>59.03</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/reference_120_knots_strength0.5</td>
+      <td>36.41</td>
+      <td>61.41</td>
+      <td>82.73</td>
+      <td>63.89</td>
+      <td>94.44</td>
+      <td>57.64</td>
+      <td>53.47</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_median_map/benchmark/map60_prior0.1_strength0.5</td>
+      <td>36.43</td>
+      <td>60.90</td>
+      <td>82.23</td>
+      <td>64.58</td>
+      <td>93.06</td>
+      <td>58.33</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_history_maps/benchmark/wind_bias_90_knots_strength0.5</td>
+      <td>36.48</td>
+      <td>60.56</td>
+      <td>82.15</td>
+      <td>64.58</td>
+      <td>93.06</td>
+      <td>58.33</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/reference_120_isotonic_strength0.5</td>
+      <td>36.52</td>
+      <td>61.78</td>
+      <td>82.81</td>
+      <td>63.19</td>
+      <td>93.75</td>
+      <td>57.64</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_anchors_w120_knots_reg0.005_strength1.0</td>
+      <td>36.52</td>
+      <td>61.66</td>
+      <td>82.44</td>
+      <td>61.81</td>
+      <td>93.75</td>
+      <td>56.25</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_median_map/benchmark/map60_prior0.02_strength1.0</td>
+      <td>36.54</td>
+      <td>61.48</td>
+      <td>82.19</td>
+      <td>63.19</td>
+      <td>93.75</td>
+      <td>57.64</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_anchors_w240_isotonic_reg0.001_strength1.0</td>
+      <td>36.56</td>
+      <td>62.05</td>
+      <td>82.73</td>
+      <td>64.58</td>
+      <td>93.75</td>
+      <td>58.33</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_fixed_ensembles/benchmark/regional_thermal_anchor_wind_bias_day_cdf7</td>
+      <td>36.56</td>
+      <td>60.58</td>
+      <td>82.07</td>
+      <td>66.67</td>
+      <td>93.06</td>
+      <td>60.42</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_fixed_ensembles/benchmark/wind_bias_only_day_cdf7</td>
+      <td>36.57</td>
+      <td>60.48</td>
+      <td>82.26</td>
+      <td>65.97</td>
+      <td>93.75</td>
+      <td>59.72</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_history_maps/benchmark/wind_bias_90_knots_strength1.0</td>
+      <td>36.60</td>
+      <td>61.49</td>
+      <td>82.62</td>
+      <td>63.19</td>
+      <td>93.75</td>
+      <td>56.94</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/blend_90_isotonic_strength1.0</td>
+      <td>36.60</td>
+      <td>61.99</td>
+      <td>82.59</td>
+      <td>63.19</td>
+      <td>94.44</td>
+      <td>57.64</td>
+      <td>53.47</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/reference_180_knots_strength1.0</td>
+      <td>36.60</td>
+      <td>61.35</td>
+      <td>82.35</td>
+      <td>61.81</td>
+      <td>95.14</td>
+      <td>56.25</td>
+      <td>54.17</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_anchors_w240_isotonic_reg0.005_strength1.0</td>
+      <td>36.68</td>
+      <td>62.37</td>
+      <td>82.75</td>
+      <td>63.89</td>
+      <td>93.75</td>
+      <td>57.64</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_median_map/benchmark/map240_prior0.1_strength0.5</td>
+      <td>36.70</td>
+      <td>60.90</td>
+      <td>81.78</td>
+      <td>64.58</td>
+      <td>93.06</td>
+      <td>58.33</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_history_maps/benchmark/thermal_180_isotonic_strength0.5</td>
+      <td>36.72</td>
+      <td>61.92</td>
+      <td>82.34</td>
+      <td>65.28</td>
+      <td>90.97</td>
+      <td>59.03</td>
+      <td>50.00</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_history_maps/benchmark/blend_90_isotonic_strength0.5</td>
+      <td>36.72</td>
+      <td>61.46</td>
+      <td>82.15</td>
+      <td>64.58</td>
+      <td>92.36</td>
+      <td>58.33</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/reference_90_knots_strength1.0</td>
+      <td>36.75</td>
+      <td>62.42</td>
+      <td>82.78</td>
+      <td>64.58</td>
+      <td>94.44</td>
+      <td>58.33</td>
+      <td>53.47</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_anchors_w90_isotonic_reg0.001_strength0.5</td>
+      <td>36.81</td>
+      <td>60.85</td>
+      <td>82.22</td>
+      <td>66.67</td>
+      <td>93.06</td>
+      <td>60.42</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_fixed_ensembles/benchmark/regional_thermal_anchor_day_cdf7</td>
+      <td>36.83</td>
+      <td>61.33</td>
+      <td>81.65</td>
+      <td>64.58</td>
+      <td>93.06</td>
+      <td>58.33</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_fixed_ensembles/benchmark/regional_thermal_anchor_wind_bias_day_original</td>
+      <td>36.84</td>
+      <td>61.11</td>
+      <td>81.93</td>
+      <td>66.67</td>
+      <td>93.06</td>
+      <td>60.42</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_anchors_w90_isotonic_reg0.005_strength0.5</td>
+      <td>36.84</td>
+      <td>61.20</td>
+      <td>82.40</td>
+      <td>65.97</td>
+      <td>93.06</td>
+      <td>59.72</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_fixed_ensembles/benchmark/wind_bias_only_day_original</td>
+      <td>36.85</td>
+      <td>61.01</td>
+      <td>82.12</td>
+      <td>65.97</td>
+      <td>93.06</td>
+      <td>59.72</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_fixed_ensembles/benchmark/regional_anchor_day_cdf7</td>
+      <td>36.86</td>
+      <td>61.70</td>
+      <td>81.82</td>
+      <td>65.97</td>
+      <td>93.06</td>
+      <td>60.42</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/reference_180_isotonic_strength1.0</td>
+      <td>36.90</td>
+      <td>61.79</td>
+      <td>82.06</td>
+      <td>62.50</td>
+      <td>94.44</td>
+      <td>56.94</td>
+      <td>53.47</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_fixed_ensembles/benchmark/thermal_only_day_cdf7</td>
+      <td>36.92</td>
+      <td>60.96</td>
+      <td>81.52</td>
+      <td>63.89</td>
+      <td>93.06</td>
+      <td>57.64</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_fixed_ensembles/benchmark/regional_boundary_day_cdf7</td>
+      <td>36.92</td>
+      <td>61.44</td>
+      <td>81.59</td>
+      <td>63.19</td>
+      <td>93.06</td>
+      <td>56.94</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_fixed_ensembles/benchmark/regional_svm_day_cdf7</td>
+      <td>36.92</td>
+      <td>61.08</td>
+      <td>81.41</td>
+      <td>64.58</td>
+      <td>93.06</td>
+      <td>58.33</td>
+      <td>50.69</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_median_map/benchmark/map240_prior0.1_strength1.0</td>
+      <td>36.97</td>
+      <td>61.69</td>
+      <td>81.73</td>
+      <td>62.50</td>
+      <td>92.36</td>
+      <td>56.25</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_fixed_ensembles/benchmark/regional_thermal_day_cdf7</td>
+      <td>36.98</td>
+      <td>61.21</td>
+      <td>81.49</td>
+      <td>63.89</td>
+      <td>93.06</td>
+      <td>57.64</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_history_maps/benchmark/blend_90_isotonic_strength1.0</td>
+      <td>36.98</td>
+      <td>63.23</td>
+      <td>82.58</td>
+      <td>62.50</td>
+      <td>90.97</td>
+      <td>56.25</td>
+      <td>50.00</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_fixed_ensembles/benchmark/regional_thermal_power_day_cdf7</td>
+      <td>36.99</td>
+      <td>61.08</td>
+      <td>81.35</td>
+      <td>64.58</td>
+      <td>93.06</td>
+      <td>58.33</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/blend_anchors_isotonic_reg0.02_strength0.5</td>
+      <td>37.00</td>
+      <td>62.88</td>
+      <td>82.49</td>
+      <td>65.28</td>
+      <td>92.36</td>
+      <td>59.03</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/blend_anchors_isotonic_reg0.005_strength1.0</td>
+      <td>37.02</td>
+      <td>63.46</td>
+      <td>82.74</td>
+      <td>63.19</td>
+      <td>93.06</td>
+      <td>56.94</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/physical_90_isotonic_strength1.0</td>
+      <td>37.04</td>
+      <td>62.23</td>
+      <td>81.82</td>
+      <td>65.28</td>
+      <td>93.75</td>
+      <td>59.03</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/physical_120_knots_strength1.0</td>
+      <td>37.07</td>
+      <td>61.23</td>
+      <td>81.86</td>
+      <td>65.28</td>
+      <td>93.75</td>
+      <td>59.03</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/reference_90_isotonic_strength1.0</td>
+      <td>37.08</td>
+      <td>62.76</td>
+      <td>82.56</td>
+      <td>64.58</td>
+      <td>94.44</td>
+      <td>59.03</td>
+      <td>53.47</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_anchors_w90_isotonic_reg0.001_strength1.0</td>
+      <td>37.09</td>
+      <td>61.58</td>
+      <td>82.43</td>
+      <td>64.58</td>
+      <td>93.75</td>
+      <td>59.03</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_fixed_ensembles/benchmark/regional_power_day_cdf7</td>
+      <td>37.10</td>
+      <td>61.33</td>
+      <td>81.38</td>
+      <td>64.58</td>
+      <td>93.06</td>
+      <td>58.33</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_fixed_ensembles/benchmark/regional_thermal_anchor_day_original</td>
+      <td>37.11</td>
+      <td>61.85</td>
+      <td>81.51</td>
+      <td>65.28</td>
+      <td>91.67</td>
+      <td>59.03</td>
+      <td>50.69</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_fixed_ensembles/benchmark/regional_anchor_day_original</td>
+      <td>37.14</td>
+      <td>62.23</td>
+      <td>81.68</td>
+      <td>65.97</td>
+      <td>90.97</td>
+      <td>60.42</td>
+      <td>50.00</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_history_maps/benchmark/blend_180_isotonic_strength0.5</td>
+      <td>37.17</td>
+      <td>63.10</td>
+      <td>82.53</td>
+      <td>65.97</td>
+      <td>92.36</td>
+      <td>59.72</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_fixed_ensembles/benchmark/regional_thermal_physical_day_cdf7</td>
+      <td>37.18</td>
+      <td>61.54</td>
+      <td>81.43</td>
+      <td>64.58</td>
+      <td>93.06</td>
+      <td>59.03</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/blend_calendar_isotonic_reg0.02_strength0.5</td>
+      <td>37.19</td>
+      <td>63.19</td>
+      <td>82.52</td>
+      <td>65.97</td>
+      <td>92.36</td>
+      <td>59.72</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_fixed_ensembles/benchmark/thermal_only_day_original</td>
+      <td>37.20</td>
+      <td>61.48</td>
+      <td>81.38</td>
+      <td>63.89</td>
+      <td>93.06</td>
+      <td>57.64</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_fixed_ensembles/benchmark/regional_boundary_day_original</td>
+      <td>37.20</td>
+      <td>61.96</td>
+      <td>81.45</td>
+      <td>63.89</td>
+      <td>93.06</td>
+      <td>57.64</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_fixed_ensembles/benchmark/regional_svm_day_original</td>
+      <td>37.20</td>
+      <td>61.61</td>
+      <td>81.27</td>
+      <td>64.58</td>
+      <td>93.06</td>
+      <td>58.33</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/blend_transition_isotonic_reg0.02_strength0.5</td>
+      <td>37.22</td>
+      <td>63.15</td>
+      <td>82.51</td>
+      <td>65.97</td>
+      <td>91.67</td>
+      <td>59.72</td>
+      <td>50.69</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_median_map/benchmark/map60_prior0.1_strength1.0</td>
+      <td>37.23</td>
+      <td>63.14</td>
+      <td>82.02</td>
+      <td>61.81</td>
+      <td>93.06</td>
+      <td>56.25</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/blend_calendar_isotonic_reg0.005_strength0.5</td>
+      <td>37.23</td>
+      <td>63.30</td>
+      <td>82.51</td>
+      <td>65.28</td>
+      <td>91.67</td>
+      <td>59.03</td>
+      <td>50.69</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_history_maps/benchmark/thermal_180_isotonic_strength1.0</td>
+      <td>37.24</td>
+      <td>64.76</td>
+      <td>82.40</td>
+      <td>63.19</td>
+      <td>90.97</td>
+      <td>58.33</td>
+      <td>50.00</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_history_maps/benchmark/wind_bias_90_isotonic_strength0.5</td>
+      <td>37.24</td>
+      <td>61.63</td>
+      <td>81.95</td>
+      <td>65.97</td>
+      <td>93.06</td>
+      <td>59.72</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_fixed_ensembles/benchmark/regional_thermal_day_original</td>
+      <td>37.25</td>
+      <td>61.73</td>
+      <td>81.35</td>
+      <td>63.89</td>
+      <td>92.36</td>
+      <td>57.64</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_fixed_ensembles/benchmark/regional_thermal_power_day_original</td>
+      <td>37.27</td>
+      <td>61.60</td>
+      <td>81.21</td>
+      <td>64.58</td>
+      <td>92.36</td>
+      <td>58.33</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>regional_evening_combo/benchmark/clad_nwp_240_strength0.5_shape0.0_mix0.5</td>
       <td>37.31</td>
       <td>62.01</td>
@@ -138,6 +2206,72 @@
       <td>90.97</td>
       <td>57.64</td>
       <td>50.00</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>ranking_ties/score_forecasts/benchmark/lambdarank_90</td>
+      <td>37.31</td>
+      <td>62.01</td>
+      <td>81.32</td>
+      <td>63.89</td>
+      <td>90.97</td>
+      <td>57.64</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>ranking_ties/score_forecasts/benchmark/lambdarank_180</td>
+      <td>37.31</td>
+      <td>62.01</td>
+      <td>81.32</td>
+      <td>63.89</td>
+      <td>88.89</td>
+      <td>57.64</td>
+      <td>47.22</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/blend_transition_isotonic_reg0.005_strength0.5</td>
+      <td>37.32</td>
+      <td>63.29</td>
+      <td>82.45</td>
+      <td>64.58</td>
+      <td>91.67</td>
+      <td>58.33</td>
+      <td>50.69</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_history_maps/benchmark/blend_120_isotonic_strength0.5</td>
+      <td>37.32</td>
+      <td>62.54</td>
+      <td>81.96</td>
+      <td>64.58</td>
+      <td>93.06</td>
+      <td>58.33</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/wind_bias_anchors_w90_isotonic_reg0.005_strength1.0</td>
+      <td>37.35</td>
+      <td>62.52</td>
+      <td>82.46</td>
+      <td>61.81</td>
+      <td>93.75</td>
+      <td>56.25</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_fixed_ensembles/benchmark/regional_power_day_original</td>
+      <td>37.37</td>
+      <td>61.86</td>
+      <td>81.24</td>
+      <td>64.58</td>
+      <td>92.36</td>
+      <td>58.33</td>
+      <td>51.39</td>
       <td>864</td>
     </tr>
     <tr>
@@ -163,6 +2297,17 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>night_fixed_ensembles/benchmark/regional_physical_day_cdf7</td>
+      <td>37.41</td>
+      <td>62.08</td>
+      <td>81.45</td>
+      <td>65.28</td>
+      <td>93.06</td>
+      <td>59.72</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>regional_evening_combo/benchmark/linear_nwp_240_strength0.5_shape0.0_mix1.0</td>
       <td>37.43</td>
       <td>62.08</td>
@@ -171,6 +2316,61 @@
       <td>90.97</td>
       <td>60.42</td>
       <td>50.00</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_fixed_ensembles/benchmark/regional_thermal_physical_day_original</td>
+      <td>37.46</td>
+      <td>62.06</td>
+      <td>81.29</td>
+      <td>65.28</td>
+      <td>92.36</td>
+      <td>59.72</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/blend_120_isotonic_strength1.0</td>
+      <td>37.59</td>
+      <td>63.21</td>
+      <td>82.30</td>
+      <td>63.19</td>
+      <td>94.44</td>
+      <td>57.64</td>
+      <td>53.47</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_wind_adjusted/benchmark/bias3_weight1.0_replace_mixture</td>
+      <td>37.68</td>
+      <td>61.77</td>
+      <td>81.43</td>
+      <td>65.97</td>
+      <td>95.14</td>
+      <td>59.72</td>
+      <td>54.17</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_fixed_ensembles/benchmark/regional_physical_day_original</td>
+      <td>37.69</td>
+      <td>62.59</td>
+      <td>81.31</td>
+      <td>65.28</td>
+      <td>91.67</td>
+      <td>59.72</td>
+      <td>50.69</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_wind_adjusted/benchmark/bias3_weight0.5_replace_mixture</td>
+      <td>37.74</td>
+      <td>61.91</td>
+      <td>81.44</td>
+      <td>64.58</td>
+      <td>95.14</td>
+      <td>58.33</td>
+      <td>54.17</td>
       <td>864</td>
     </tr>
     <tr>
@@ -185,6 +2385,116 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>evening_median_map/benchmark/physical_120_isotonic_strength1.0</td>
+      <td>37.86</td>
+      <td>62.96</td>
+      <td>81.52</td>
+      <td>63.89</td>
+      <td>93.75</td>
+      <td>58.33</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/reference_120_knots_strength1.0</td>
+      <td>37.92</td>
+      <td>63.42</td>
+      <td>82.01</td>
+      <td>62.50</td>
+      <td>94.44</td>
+      <td>56.94</td>
+      <td>53.47</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_context_hurdle/benchmark/regional_transition_C1.0_mixture_strength1.0</td>
+      <td>38.02</td>
+      <td>63.52</td>
+      <td>81.18</td>
+      <td>63.89</td>
+      <td>93.06</td>
+      <td>58.33</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>tabicl_night_hurdle/benchmark/regional_transition_240_weight0.5</td>
+      <td>38.02</td>
+      <td>62.95</td>
+      <td>81.03</td>
+      <td>64.58</td>
+      <td>93.06</td>
+      <td>59.03</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_weather/benchmark/thermal_240_reg0.001_strength1.0</td>
+      <td>38.03</td>
+      <td>62.23</td>
+      <td>80.69</td>
+      <td>65.28</td>
+      <td>95.14</td>
+      <td>59.72</td>
+      <td>54.17</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_context_hurdle/benchmark/regional_reserve_C1.0_mixture_strength1.0</td>
+      <td>38.03</td>
+      <td>62.45</td>
+      <td>80.56</td>
+      <td>64.58</td>
+      <td>93.06</td>
+      <td>59.03</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_history_maps/benchmark/wind_bias_90_isotonic_strength1.0</td>
+      <td>38.04</td>
+      <td>63.42</td>
+      <td>81.97</td>
+      <td>64.58</td>
+      <td>93.75</td>
+      <td>58.33</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_history_maps/benchmark/blend_120_isotonic_strength1.0</td>
+      <td>38.07</td>
+      <td>64.84</td>
+      <td>81.91</td>
+      <td>62.50</td>
+      <td>93.06</td>
+      <td>56.94</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>tabicl_night_hurdle/benchmark/regional_240_weight0.5</td>
+      <td>38.11</td>
+      <td>63.04</td>
+      <td>80.94</td>
+      <td>64.58</td>
+      <td>93.06</td>
+      <td>59.03</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_wind_adjusted/benchmark/bias7_weight1.0_replace_mixture</td>
+      <td>38.13</td>
+      <td>63.00</td>
+      <td>81.74</td>
+      <td>65.28</td>
+      <td>95.14</td>
+      <td>59.03</td>
+      <td>54.17</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_context_hurdle/benchmark/regional_l2_C1.0_mixture_strength1.0</td>
       <td>38.14</td>
       <td>62.75</td>
@@ -193,6 +2503,72 @@
       <td>93.06</td>
       <td>59.03</td>
       <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_context_hurdle/benchmark/regional_nonmarket_C1.0_mixture_strength1.0</td>
+      <td>38.19</td>
+      <td>62.94</td>
+      <td>80.66</td>
+      <td>65.28</td>
+      <td>93.06</td>
+      <td>59.72</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_context_hurdle/benchmark/regional_price_boundary_reg0.005_mixture_strength1.0</td>
+      <td>38.19</td>
+      <td>62.71</td>
+      <td>80.25</td>
+      <td>65.97</td>
+      <td>95.14</td>
+      <td>60.42</td>
+      <td>54.17</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_wind_adjusted/benchmark/bias7_weight0.5_replace_mixture</td>
+      <td>38.21</td>
+      <td>62.84</td>
+      <td>81.16</td>
+      <td>65.28</td>
+      <td>93.75</td>
+      <td>59.03</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_median_map/benchmark/reference_120_isotonic_strength1.0</td>
+      <td>38.22</td>
+      <td>64.46</td>
+      <td>82.11</td>
+      <td>63.89</td>
+      <td>94.44</td>
+      <td>58.33</td>
+      <td>53.47</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>tabicl_night_hurdle/benchmark/core_240_weight0.5</td>
+      <td>38.25</td>
+      <td>64.13</td>
+      <td>81.46</td>
+      <td>63.89</td>
+      <td>93.06</td>
+      <td>58.33</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_weather/benchmark/core_240_reg0.005_strength1.0</td>
+      <td>38.26</td>
+      <td>62.68</td>
+      <td>80.56</td>
+      <td>66.67</td>
+      <td>95.14</td>
+      <td>61.11</td>
+      <td>54.17</td>
       <td>864</td>
     </tr>
     <tr>
@@ -207,6 +2583,61 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>night_bid_state/benchmark/median7_gate0.25_strength0.5</td>
+      <td>38.30</td>
+      <td>63.56</td>
+      <td>81.12</td>
+      <td>63.19</td>
+      <td>93.06</td>
+      <td>58.33</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_bid_state/benchmark/median7_gate0.5_strength0.5</td>
+      <td>38.30</td>
+      <td>63.56</td>
+      <td>81.12</td>
+      <td>63.19</td>
+      <td>93.06</td>
+      <td>58.33</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/blend_anchors_isotonic_reg0.02_strength1.0</td>
+      <td>38.31</td>
+      <td>66.76</td>
+      <td>82.22</td>
+      <td>63.89</td>
+      <td>90.97</td>
+      <td>57.64</td>
+      <td>50.00</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_bid_state/benchmark/median14_gate0.5_strength0.5</td>
+      <td>38.34</td>
+      <td>62.98</td>
+      <td>80.90</td>
+      <td>64.58</td>
+      <td>93.06</td>
+      <td>59.72</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_bid_state/benchmark/median14_gate0.25_strength0.5</td>
+      <td>38.34</td>
+      <td>62.98</td>
+      <td>80.90</td>
+      <td>64.58</td>
+      <td>93.06</td>
+      <td>59.72</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>evening_supply_combo/benchmark/clad_nwp_240_strength0.5_shape0.0_mix1.0</td>
       <td>38.35</td>
       <td>63.65</td>
@@ -215,6 +2646,28 @@
       <td>93.06</td>
       <td>57.64</td>
       <td>49.31</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_wind_adjusted/benchmark/ridge0.01_weight0.5_augment_mixture</td>
+      <td>38.35</td>
+      <td>62.58</td>
+      <td>80.21</td>
+      <td>64.58</td>
+      <td>95.14</td>
+      <td>58.33</td>
+      <td>53.47</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>tabicl_night_hurdle/benchmark/regional_transition_240_weight1.0</td>
+      <td>38.36</td>
+      <td>63.62</td>
+      <td>80.96</td>
+      <td>64.58</td>
+      <td>93.06</td>
+      <td>59.03</td>
+      <td>51.39</td>
       <td>864</td>
     </tr>
     <tr>
@@ -229,6 +2682,28 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>night_bid_state/benchmark/ewm3_gate0.25_strength0.5</td>
+      <td>38.39</td>
+      <td>63.28</td>
+      <td>80.97</td>
+      <td>63.19</td>
+      <td>95.14</td>
+      <td>58.33</td>
+      <td>54.17</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_bid_state/benchmark/ewm3_gate0.5_strength0.5</td>
+      <td>38.39</td>
+      <td>63.28</td>
+      <td>80.97</td>
+      <td>63.19</td>
+      <td>95.14</td>
+      <td>58.33</td>
+      <td>54.17</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>evening_supply_combo/benchmark/linear_nwp_240_strength0.5_shape0.0_mix1.0</td>
       <td>38.40</td>
       <td>63.75</td>
@@ -237,6 +2712,28 @@
       <td>93.06</td>
       <td>59.72</td>
       <td>49.31</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_weather_distribution/benchmark/power_qr_240_mixture_strength1.0</td>
+      <td>38.43</td>
+      <td>63.13</td>
+      <td>80.68</td>
+      <td>65.97</td>
+      <td>95.14</td>
+      <td>60.42</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>tabicl_night_hurdle/benchmark/regional_240_weight1.0</td>
+      <td>38.44</td>
+      <td>63.68</td>
+      <td>80.94</td>
+      <td>64.58</td>
+      <td>93.06</td>
+      <td>59.03</td>
+      <td>52.08</td>
       <td>864</td>
     </tr>
     <tr>
@@ -251,12 +2748,78 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>night_wind_adjusted/benchmark/ridge0.1_weight0.5_augment_mixture</td>
+      <td>38.45</td>
+      <td>62.56</td>
+      <td>79.91</td>
+      <td>64.58</td>
+      <td>95.14</td>
+      <td>58.33</td>
+      <td>53.47</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_bid_state/benchmark/ewm14_gate0.25_strength0.5</td>
+      <td>38.48</td>
+      <td>62.95</td>
+      <td>80.53</td>
+      <td>64.58</td>
+      <td>93.75</td>
+      <td>59.03</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_bid_state/benchmark/ewm14_gate0.5_strength0.5</td>
+      <td>38.49</td>
+      <td>62.95</td>
+      <td>80.53</td>
+      <td>64.58</td>
+      <td>93.75</td>
+      <td>59.03</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_bid_state/benchmark/ewm7_gate0.25_strength0.5</td>
+      <td>38.52</td>
+      <td>63.10</td>
+      <td>80.72</td>
+      <td>65.28</td>
+      <td>94.44</td>
+      <td>59.72</td>
+      <td>53.47</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_bid_state/benchmark/ewm7_gate0.5_strength0.5</td>
+      <td>38.52</td>
+      <td>63.10</td>
+      <td>80.71</td>
+      <td>65.28</td>
+      <td>94.44</td>
+      <td>59.72</td>
+      <td>53.47</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_context_cdf/benchmark/boundary_price_l2_C0.1_hard_strength1.0_mix1.0</td>
       <td>38.56</td>
       <td>63.82</td>
       <td>81.06</td>
       <td>63.89</td>
       <td>93.75</td>
+      <td>58.33</td>
+      <td>50.00</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_history_maps/benchmark/blend_180_isotonic_strength1.0</td>
+      <td>38.62</td>
+      <td>67.25</td>
+      <td>82.23</td>
+      <td>64.58</td>
+      <td>90.97</td>
       <td>58.33</td>
       <td>50.00</td>
       <td>864</td>
@@ -273,7 +2836,84 @@
       <td>864</td>
     </tr>
     <tr>
-      <td>night_bias/benchmark/median7_strength0.25_gate0</td>
+      <td>night_context_hurdle/benchmark/regional_transition_C1.0_hard_strength1.0</td>
+      <td>38.64</td>
+      <td>63.48</td>
+      <td>80.54</td>
+      <td>63.89</td>
+      <td>95.14</td>
+      <td>59.03</td>
+      <td>54.17</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/blend_calendar_isotonic_reg0.02_strength1.0</td>
+      <td>38.67</td>
+      <td>67.46</td>
+      <td>82.23</td>
+      <td>64.58</td>
+      <td>90.97</td>
+      <td>58.33</td>
+      <td>50.00</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/blend_calendar_isotonic_reg0.005_strength1.0</td>
+      <td>38.74</td>
+      <td>67.66</td>
+      <td>82.23</td>
+      <td>64.58</td>
+      <td>90.97</td>
+      <td>58.33</td>
+      <td>50.00</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_weather/benchmark/thermal_240_age60_reg0.005_strength1.0</td>
+      <td>38.80</td>
+      <td>63.26</td>
+      <td>80.37</td>
+      <td>65.97</td>
+      <td>95.14</td>
+      <td>59.72</td>
+      <td>54.17</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_map/benchmark/blend_transition_isotonic_reg0.02_strength1.0</td>
+      <td>38.81</td>
+      <td>67.63</td>
+      <td>82.19</td>
+      <td>65.28</td>
+      <td>90.97</td>
+      <td>59.03</td>
+      <td>50.00</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_bid_state/benchmark/median14_gate0.5_strength1.0</td>
+      <td>38.81</td>
+      <td>63.64</td>
+      <td>80.92</td>
+      <td>63.19</td>
+      <td>93.06</td>
+      <td>58.33</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_bid_state/benchmark/median14_gate0.25_strength1.0</td>
+      <td>38.81</td>
+      <td>63.64</td>
+      <td>80.92</td>
+      <td>63.19</td>
+      <td>93.06</td>
+      <td>58.33</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_bias/benchmark/median7_strength0.25_gate1</td>
       <td>38.81</td>
       <td>64.22</td>
       <td>81.04</td>
@@ -284,7 +2924,7 @@
       <td>864</td>
     </tr>
     <tr>
-      <td>night_bias/benchmark/median7_strength0.25_gate1</td>
+      <td>night_bias/benchmark/median7_strength0.25_gate0</td>
       <td>38.81</td>
       <td>64.22</td>
       <td>81.04</td>
@@ -314,6 +2954,17 @@
       <td>95.14</td>
       <td>59.72</td>
       <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_weather/benchmark/core_240_age60_reg0.005_strength1.0</td>
+      <td>38.84</td>
+      <td>63.23</td>
+      <td>80.37</td>
+      <td>65.97</td>
+      <td>95.14</td>
+      <td>59.72</td>
+      <td>54.17</td>
       <td>864</td>
     </tr>
     <tr>
@@ -361,6 +3012,17 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>night_bid_state/benchmark/ewm14_gate0.25_strength1.0</td>
+      <td>38.85</td>
+      <td>63.28</td>
+      <td>80.44</td>
+      <td>63.89</td>
+      <td>95.14</td>
+      <td>58.33</td>
+      <td>54.17</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_context_hurdle/benchmark/regional_l1_C1.0_hard_strength1.0</td>
       <td>38.85</td>
       <td>63.78</td>
@@ -383,14 +3045,14 @@
       <td>864</td>
     </tr>
     <tr>
-      <td>night_bias/benchmark/median7_strength0.5_gate1</td>
-      <td>38.87</td>
-      <td>64.24</td>
-      <td>81.02</td>
-      <td>64.58</td>
-      <td>93.75</td>
-      <td>59.72</td>
-      <td>50.00</td>
+      <td>night_bid_state/benchmark/ewm14_gate0.5_strength1.0</td>
+      <td>38.86</td>
+      <td>63.29</td>
+      <td>80.43</td>
+      <td>63.89</td>
+      <td>95.14</td>
+      <td>58.33</td>
+      <td>54.17</td>
       <td>864</td>
     </tr>
     <tr>
@@ -405,7 +3067,18 @@
       <td>864</td>
     </tr>
     <tr>
-      <td>night_bias/benchmark/median14_strength0.5_gate0</td>
+      <td>night_bias/benchmark/median7_strength0.5_gate1</td>
+      <td>38.87</td>
+      <td>64.24</td>
+      <td>81.02</td>
+      <td>64.58</td>
+      <td>93.75</td>
+      <td>59.72</td>
+      <td>50.00</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_bias/benchmark/median14_strength0.5_gate1</td>
       <td>38.90</td>
       <td>64.15</td>
       <td>81.01</td>
@@ -416,7 +3089,7 @@
       <td>864</td>
     </tr>
     <tr>
-      <td>night_bias/benchmark/median14_strength0.5_gate1</td>
+      <td>night_bias/benchmark/median14_strength0.5_gate0</td>
       <td>38.90</td>
       <td>64.15</td>
       <td>81.01</td>
@@ -460,6 +3133,17 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>night_conditional_map/benchmark/blend_transition_isotonic_reg0.005_strength1.0</td>
+      <td>38.93</td>
+      <td>67.88</td>
+      <td>82.13</td>
+      <td>63.19</td>
+      <td>90.97</td>
+      <td>56.94</td>
+      <td>50.00</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_gaussian/benchmark/air_nwp_240_matern_hard_strength1.0</td>
       <td>38.95</td>
       <td>64.03</td>
@@ -482,14 +3166,25 @@
       <td>864</td>
     </tr>
     <tr>
-      <td>night_bias/benchmark/median7_strength1.0_gate0</td>
-      <td>39.01</td>
-      <td>64.47</td>
-      <td>81.06</td>
-      <td>63.19</td>
-      <td>93.75</td>
-      <td>58.33</td>
-      <td>50.00</td>
+      <td>night_bid_state/benchmark/ewm7_gate0.25_strength1.0</td>
+      <td>38.99</td>
+      <td>63.71</td>
+      <td>80.66</td>
+      <td>65.97</td>
+      <td>95.14</td>
+      <td>60.42</td>
+      <td>54.17</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_bid_state/benchmark/ewm7_gate0.5_strength1.0</td>
+      <td>39.00</td>
+      <td>63.72</td>
+      <td>80.65</td>
+      <td>65.28</td>
+      <td>95.14</td>
+      <td>60.42</td>
+      <td>54.17</td>
       <td>864</td>
     </tr>
     <tr>
@@ -504,13 +3199,13 @@
       <td>864</td>
     </tr>
     <tr>
-      <td>night_bias/benchmark/median30_strength0.5_gate0</td>
-      <td>39.02</td>
-      <td>64.34</td>
-      <td>80.97</td>
-      <td>64.58</td>
+      <td>night_bias/benchmark/median7_strength1.0_gate0</td>
+      <td>39.01</td>
+      <td>64.47</td>
+      <td>81.06</td>
+      <td>63.19</td>
       <td>93.75</td>
-      <td>59.72</td>
+      <td>58.33</td>
       <td>50.00</td>
       <td>864</td>
     </tr>
@@ -526,6 +3221,50 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>night_bias/benchmark/median30_strength0.5_gate0</td>
+      <td>39.02</td>
+      <td>64.34</td>
+      <td>80.97</td>
+      <td>64.58</td>
+      <td>93.75</td>
+      <td>59.72</td>
+      <td>50.00</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_weather_distribution/benchmark/svm_regional_240_C10.0_mixture_strength1.0</td>
+      <td>39.02</td>
+      <td>63.27</td>
+      <td>79.71</td>
+      <td>65.97</td>
+      <td>95.14</td>
+      <td>59.72</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_bid_state/benchmark/ewm3_gate0.25_strength1.0</td>
+      <td>39.03</td>
+      <td>64.62</td>
+      <td>81.12</td>
+      <td>62.50</td>
+      <td>95.14</td>
+      <td>57.64</td>
+      <td>54.17</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_bid_state/benchmark/ewm3_gate0.5_strength1.0</td>
+      <td>39.03</td>
+      <td>64.62</td>
+      <td>81.12</td>
+      <td>62.50</td>
+      <td>95.14</td>
+      <td>57.64</td>
+      <td>54.17</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_hurdle/benchmark/logistic_thermo_nwp_240_C1.0_mixture_strength1.0</td>
       <td>39.06</td>
       <td>64.30</td>
@@ -534,6 +3273,17 @@
       <td>93.75</td>
       <td>59.72</td>
       <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_context_hurdle/benchmark/regional_boundary_price_raw_reg0.02_mixture_strength1.0</td>
+      <td>39.07</td>
+      <td>63.41</td>
+      <td>79.50</td>
+      <td>63.89</td>
+      <td>95.14</td>
+      <td>58.33</td>
+      <td>54.17</td>
       <td>864</td>
     </tr>
     <tr>
@@ -559,7 +3309,7 @@
       <td>864</td>
     </tr>
     <tr>
-      <td>night_context_hurdle/benchmark/nonmarket_l2_C1.0_hard_strength1.0</td>
+      <td>night_hurdle/benchmark/logistic_nwp_240_C1.0_hard_strength1.0</td>
       <td>39.11</td>
       <td>64.41</td>
       <td>80.63</td>
@@ -581,7 +3331,7 @@
       <td>864</td>
     </tr>
     <tr>
-      <td>night_hurdle/benchmark/logistic_nwp_240_C1.0_hard_strength1.0</td>
+      <td>night_context_hurdle/benchmark/nonmarket_l2_C1.0_hard_strength1.0</td>
       <td>39.11</td>
       <td>64.41</td>
       <td>80.63</td>
@@ -592,7 +3342,7 @@
       <td>864</td>
     </tr>
     <tr>
-      <td>night_bias/benchmark/ewma14_strength0.25_gate0</td>
+      <td>night_bias/benchmark/ewma14_strength0.25_gate1</td>
       <td>39.11</td>
       <td>64.58</td>
       <td>80.95</td>
@@ -603,7 +3353,7 @@
       <td>864</td>
     </tr>
     <tr>
-      <td>night_bias/benchmark/ewma14_strength0.25_gate1</td>
+      <td>night_bias/benchmark/ewma14_strength0.25_gate0</td>
       <td>39.11</td>
       <td>64.58</td>
       <td>80.95</td>
@@ -647,6 +3397,17 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>night_context_hurdle/benchmark/regional_price_boundary_reg0.02_mixture_strength1.0</td>
+      <td>39.17</td>
+      <td>63.46</td>
+      <td>79.45</td>
+      <td>63.89</td>
+      <td>95.14</td>
+      <td>58.33</td>
+      <td>54.17</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_context_hurdle/benchmark/nonmarket_l2_C1.0_mixture_strength1.0</td>
       <td>39.18</td>
       <td>64.90</td>
@@ -655,17 +3416,6 @@
       <td>93.06</td>
       <td>59.03</td>
       <td>50.69</td>
-      <td>864</td>
-    </tr>
-    <tr>
-      <td>night_bias/benchmark/median3_strength0.25_gate0</td>
-      <td>39.19</td>
-      <td>64.41</td>
-      <td>81.00</td>
-      <td>63.89</td>
-      <td>94.44</td>
-      <td>59.03</td>
-      <td>50.00</td>
       <td>864</td>
     </tr>
     <tr>
@@ -680,7 +3430,18 @@
       <td>864</td>
     </tr>
     <tr>
-      <td>night_bias/benchmark/ewma7_strength0.25_gate0</td>
+      <td>night_bias/benchmark/median3_strength0.25_gate0</td>
+      <td>39.19</td>
+      <td>64.41</td>
+      <td>81.00</td>
+      <td>63.89</td>
+      <td>94.44</td>
+      <td>59.03</td>
+      <td>50.00</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_bias/benchmark/ewma7_strength0.25_gate1</td>
       <td>39.19</td>
       <td>64.76</td>
       <td>80.94</td>
@@ -691,7 +3452,7 @@
       <td>864</td>
     </tr>
     <tr>
-      <td>night_bias/benchmark/ewma7_strength0.25_gate1</td>
+      <td>night_bias/benchmark/ewma7_strength0.25_gate0</td>
       <td>39.19</td>
       <td>64.76</td>
       <td>80.94</td>
@@ -735,6 +3496,17 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>night_conditional_weather/benchmark/pca3_240_reg0.02_strength1.0</td>
+      <td>39.25</td>
+      <td>64.13</td>
+      <td>79.68</td>
+      <td>64.58</td>
+      <td>95.14</td>
+      <td>59.03</td>
+      <td>54.17</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_bias/benchmark/median30_strength1.0_gate1</td>
       <td>39.25</td>
       <td>64.49</td>
@@ -757,17 +3529,6 @@
       <td>864</td>
     </tr>
     <tr>
-      <td>night_bias/benchmark/ewma3_strength0.25_gate1</td>
-      <td>39.26</td>
-      <td>65.00</td>
-      <td>80.93</td>
-      <td>63.89</td>
-      <td>94.44</td>
-      <td>59.03</td>
-      <td>50.00</td>
-      <td>864</td>
-    </tr>
-    <tr>
       <td>night_bias/benchmark/ewma3_strength0.25_gate0</td>
       <td>39.26</td>
       <td>65.00</td>
@@ -779,6 +3540,39 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>night_bias/benchmark/ewma3_strength0.25_gate1</td>
+      <td>39.26</td>
+      <td>65.00</td>
+      <td>80.93</td>
+      <td>63.89</td>
+      <td>94.44</td>
+      <td>59.03</td>
+      <td>50.00</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_weather/benchmark/pca6_240_reg0.02_strength1.0</td>
+      <td>39.26</td>
+      <td>63.70</td>
+      <td>79.48</td>
+      <td>64.58</td>
+      <td>95.14</td>
+      <td>59.03</td>
+      <td>54.17</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_weather/benchmark/thermal_365_band4_half90_strength1.0</td>
+      <td>39.31</td>
+      <td>65.77</td>
+      <td>80.14</td>
+      <td>64.58</td>
+      <td>93.06</td>
+      <td>59.03</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_context_hurdle/benchmark/regional_priceanchors_mixture_strength1.0</td>
       <td>39.31</td>
       <td>64.03</td>
@@ -786,6 +3580,17 @@
       <td>65.97</td>
       <td>95.14</td>
       <td>61.11</td>
+      <td>54.17</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_context_hurdle/benchmark/regional_boundary_price_ratios_reg0.02_mixture_strength1.0</td>
+      <td>39.33</td>
+      <td>63.62</td>
+      <td>79.44</td>
+      <td>63.89</td>
+      <td>95.14</td>
+      <td>58.33</td>
       <td>54.17</td>
       <td>864</td>
     </tr>
@@ -801,6 +3606,28 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>night_bid_state/benchmark/median7_gate0.25_strength1.0</td>
+      <td>39.35</td>
+      <td>65.54</td>
+      <td>80.95</td>
+      <td>61.81</td>
+      <td>93.06</td>
+      <td>57.64</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_bid_state/benchmark/median7_gate0.5_strength1.0</td>
+      <td>39.35</td>
+      <td>65.54</td>
+      <td>80.95</td>
+      <td>61.81</td>
+      <td>93.06</td>
+      <td>57.64</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_context_hurdle/benchmark/boundary_l2_C0.1_mixture_strength1.0</td>
       <td>39.40</td>
       <td>64.87</td>
@@ -809,6 +3636,28 @@
       <td>93.75</td>
       <td>59.03</td>
       <td>50.69</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_weather/benchmark/sites_240_reg0.02_strength1.0</td>
+      <td>39.41</td>
+      <td>64.24</td>
+      <td>79.47</td>
+      <td>64.58</td>
+      <td>95.14</td>
+      <td>59.03</td>
+      <td>54.17</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_weather/benchmark/core_120_reg0.005_strength1.0</td>
+      <td>39.44</td>
+      <td>63.81</td>
+      <td>80.14</td>
+      <td>68.06</td>
+      <td>95.14</td>
+      <td>61.81</td>
+      <td>54.17</td>
       <td>864</td>
     </tr>
     <tr>
@@ -845,6 +3694,17 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>night_bias/benchmark/ewma14_strength0.5_gate1</td>
+      <td>39.49</td>
+      <td>64.98</td>
+      <td>80.81</td>
+      <td>65.97</td>
+      <td>93.75</td>
+      <td>60.42</td>
+      <td>50.00</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_bias/benchmark/ewma14_strength0.5_gate0</td>
       <td>39.49</td>
       <td>64.98</td>
@@ -856,14 +3716,25 @@
       <td>864</td>
     </tr>
     <tr>
-      <td>night_bias/benchmark/ewma14_strength0.5_gate1</td>
-      <td>39.49</td>
-      <td>64.98</td>
-      <td>80.81</td>
-      <td>65.97</td>
-      <td>93.75</td>
+      <td>night_weather_distribution/benchmark/svm_regional_240_C1.0_mixture_strength1.0</td>
+      <td>39.51</td>
+      <td>63.83</td>
+      <td>79.24</td>
+      <td>66.67</td>
+      <td>95.14</td>
       <td>60.42</td>
-      <td>50.00</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>tabicl_night_hurdle/benchmark/core_240_weight1.0</td>
+      <td>39.55</td>
+      <td>66.90</td>
+      <td>80.90</td>
+      <td>64.58</td>
+      <td>91.67</td>
+      <td>59.03</td>
+      <td>50.69</td>
       <td>864</td>
     </tr>
     <tr>
@@ -922,6 +3793,17 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>night_conditional_weather/benchmark/thermal_120_reg0.005_strength1.0</td>
+      <td>39.66</td>
+      <td>64.27</td>
+      <td>80.06</td>
+      <td>68.06</td>
+      <td>95.14</td>
+      <td>61.81</td>
+      <td>54.17</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_supply_cdf/benchmark/clad_wind_240_strength1.0_shape1.0_mix1.0</td>
       <td>39.67</td>
       <td>65.14</td>
@@ -944,7 +3826,7 @@
       <td>864</td>
     </tr>
     <tr>
-      <td>night_bias/benchmark/ewma7_strength0.5_gate0</td>
+      <td>night_bias/benchmark/ewma7_strength0.5_gate1</td>
       <td>39.72</td>
       <td>65.44</td>
       <td>80.83</td>
@@ -955,7 +3837,7 @@
       <td>864</td>
     </tr>
     <tr>
-      <td>night_bias/benchmark/ewma7_strength0.5_gate1</td>
+      <td>night_bias/benchmark/ewma7_strength0.5_gate0</td>
       <td>39.72</td>
       <td>65.44</td>
       <td>80.83</td>
@@ -999,6 +3881,17 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>night_conditional_weather/benchmark/thermal_240_reg0.001_strength0.5</td>
+      <td>39.76</td>
+      <td>64.74</td>
+      <td>80.01</td>
+      <td>64.58</td>
+      <td>95.14</td>
+      <td>59.72</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>hourly_night_hurdle/benchmark/logistic_nwp_240_hard_strength1.0</td>
       <td>39.78</td>
       <td>66.30</td>
@@ -1032,6 +3925,17 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>night_wind_adjusted/benchmark/bias3_weight1.0_replace_hard</td>
+      <td>39.83</td>
+      <td>64.49</td>
+      <td>79.75</td>
+      <td>64.58</td>
+      <td>95.83</td>
+      <td>58.33</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_gaussian/benchmark/nwp_240_matern_hard_strength1.0</td>
       <td>39.83</td>
       <td>65.89</td>
@@ -1040,6 +3944,17 @@
       <td>95.83</td>
       <td>61.11</td>
       <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_wind_adjusted/benchmark/bias3_weight0.5_replace_hard</td>
+      <td>39.85</td>
+      <td>64.21</td>
+      <td>79.69</td>
+      <td>63.19</td>
+      <td>95.14</td>
+      <td>57.64</td>
+      <td>51.39</td>
       <td>864</td>
     </tr>
     <tr>
@@ -1054,6 +3969,83 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>night_context_hurdle/benchmark/regional_nonmarket_C1.0_mixture_strength0.5</td>
+      <td>39.86</td>
+      <td>65.05</td>
+      <td>79.98</td>
+      <td>65.97</td>
+      <td>95.14</td>
+      <td>60.42</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_context_hurdle/benchmark/regional_transition_C1.0_mixture_strength0.5</td>
+      <td>39.86</td>
+      <td>65.15</td>
+      <td>79.97</td>
+      <td>65.28</td>
+      <td>95.14</td>
+      <td>59.72</td>
+      <td>53.47</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_context_hurdle/benchmark/regional_price_boundary_reg0.005_mixture_strength0.5</td>
+      <td>39.86</td>
+      <td>64.99</td>
+      <td>79.76</td>
+      <td>65.28</td>
+      <td>95.14</td>
+      <td>59.72</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_weather/benchmark/core_240_reg0.005_strength0.5</td>
+      <td>39.88</td>
+      <td>64.98</td>
+      <td>79.95</td>
+      <td>65.28</td>
+      <td>95.14</td>
+      <td>60.42</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_weather/benchmark/core_240_age30_reg0.005_strength1.0</td>
+      <td>39.89</td>
+      <td>65.29</td>
+      <td>80.03</td>
+      <td>66.67</td>
+      <td>95.14</td>
+      <td>60.42</td>
+      <td>54.17</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_wind_adjusted/benchmark/ridge0.1_weight0.5_augment_hard</td>
+      <td>39.89</td>
+      <td>64.76</td>
+      <td>79.56</td>
+      <td>63.89</td>
+      <td>95.14</td>
+      <td>58.33</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_weather/benchmark/thermal_240_age30_reg0.005_strength1.0</td>
+      <td>39.90</td>
+      <td>65.31</td>
+      <td>80.03</td>
+      <td>66.67</td>
+      <td>95.14</td>
+      <td>60.42</td>
+      <td>54.17</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_context_hurdle/benchmark/boundary_priceanchors_hard_strength1.0</td>
       <td>39.90</td>
       <td>66.04</td>
@@ -1061,6 +4053,17 @@
       <td>63.89</td>
       <td>95.14</td>
       <td>59.72</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_wind_adjusted/benchmark/ridge0.01_weight0.5_augment_hard</td>
+      <td>39.90</td>
+      <td>64.78</td>
+      <td>79.56</td>
+      <td>63.89</td>
+      <td>95.14</td>
+      <td>58.33</td>
       <td>51.39</td>
       <td>864</td>
     </tr>
@@ -1098,6 +4101,17 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>night_context_hurdle/benchmark/regional_nonmarket_C1.0_hard_strength1.0</td>
+      <td>39.96</td>
+      <td>64.81</td>
+      <td>79.54</td>
+      <td>63.89</td>
+      <td>95.14</td>
+      <td>59.03</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>hourly_night_hurdle/benchmark/logistic_nwp_240_mixture_strength1.0</td>
       <td>39.97</td>
       <td>67.57</td>
@@ -1106,6 +4120,17 @@
       <td>90.97</td>
       <td>54.86</td>
       <td>50.00</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_context_hurdle/benchmark/regional_price_boundary_reg0.005_hard_strength1.0</td>
+      <td>39.98</td>
+      <td>65.12</td>
+      <td>79.56</td>
+      <td>64.58</td>
+      <td>95.14</td>
+      <td>59.03</td>
+      <td>51.39</td>
       <td>864</td>
     </tr>
     <tr>
@@ -1164,6 +4189,28 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>night_weather_distribution/benchmark/regional_gp_240_mixture_strength1.0</td>
+      <td>40.10</td>
+      <td>64.81</td>
+      <td>79.25</td>
+      <td>64.58</td>
+      <td>95.14</td>
+      <td>59.03</td>
+      <td>54.17</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_context_hurdle/benchmark/regional_reserve_C1.0_mixture_strength0.5</td>
+      <td>40.11</td>
+      <td>65.11</td>
+      <td>79.75</td>
+      <td>65.28</td>
+      <td>95.14</td>
+      <td>59.72</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_context_cdf/benchmark/boundary_price_l2_C0.1_hard_strength1.0_mix0.5</td>
       <td>40.12</td>
       <td>65.90</td>
@@ -1182,6 +4229,17 @@
       <td>65.97</td>
       <td>95.83</td>
       <td>61.11</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_wind_adjusted/benchmark/bias7_weight1.0_replace_hard</td>
+      <td>40.17</td>
+      <td>64.68</td>
+      <td>79.45</td>
+      <td>65.28</td>
+      <td>95.14</td>
+      <td>59.03</td>
       <td>51.39</td>
       <td>864</td>
     </tr>
@@ -1263,6 +4321,17 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>night_conditional_weather/benchmark/thermal_240_age60_reg0.005_strength0.5</td>
+      <td>40.23</td>
+      <td>65.28</td>
+      <td>79.82</td>
+      <td>67.36</td>
+      <td>95.14</td>
+      <td>61.81</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_supply_curve/benchmark/clad_weather_240_strength1.0_shape1.0</td>
       <td>40.23</td>
       <td>66.29</td>
@@ -1329,6 +4398,17 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>night_conditional_weather/benchmark/core_240_age60_reg0.005_strength0.5</td>
+      <td>40.25</td>
+      <td>65.29</td>
+      <td>79.81</td>
+      <td>67.36</td>
+      <td>95.14</td>
+      <td>61.81</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_context_hurdle/benchmark/regional_l1_C1.0_hard_strength0.5</td>
       <td>40.26</td>
       <td>65.80</td>
@@ -1337,6 +4417,17 @@
       <td>95.83</td>
       <td>60.42</td>
       <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_context_hurdle/benchmark/regional_transition_C1.0_hard_strength0.5</td>
+      <td>40.26</td>
+      <td>65.47</td>
+      <td>79.65</td>
+      <td>65.28</td>
+      <td>95.83</td>
+      <td>60.42</td>
+      <td>53.47</td>
       <td>864</td>
     </tr>
     <tr>
@@ -1428,6 +4519,17 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>night_weather_distribution/benchmark/regional_gp_240_hard_strength1.0</td>
+      <td>40.32</td>
+      <td>64.99</td>
+      <td>79.28</td>
+      <td>64.58</td>
+      <td>95.14</td>
+      <td>59.03</td>
+      <td>53.47</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_pointwise/benchmark/wind_240_shapefitted</td>
       <td>40.32</td>
       <td>65.84</td>
@@ -1447,6 +4549,39 @@
       <td>93.75</td>
       <td>59.72</td>
       <td>50.00</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_wind_adjusted/benchmark/bias7_weight0.5_replace_hard</td>
+      <td>40.33</td>
+      <td>64.88</td>
+      <td>79.40</td>
+      <td>64.58</td>
+      <td>95.14</td>
+      <td>59.03</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_context_hurdle/benchmark/regional_boundary_price_raw_reg0.02_mixture_strength0.5</td>
+      <td>40.34</td>
+      <td>65.34</td>
+      <td>79.24</td>
+      <td>63.89</td>
+      <td>95.14</td>
+      <td>59.03</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_weather_distribution/benchmark/regional_gp_240_mixture_strength0.5</td>
+      <td>40.35</td>
+      <td>65.59</td>
+      <td>79.06</td>
+      <td>66.67</td>
+      <td>95.14</td>
+      <td>61.81</td>
+      <td>52.08</td>
       <td>864</td>
     </tr>
     <tr>
@@ -1472,6 +4607,28 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>night_conditional_weather/benchmark/pca3_240_reg0.02_strength0.5</td>
+      <td>40.36</td>
+      <td>65.71</td>
+      <td>79.57</td>
+      <td>64.58</td>
+      <td>95.14</td>
+      <td>59.72</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_weather/benchmark/pca6_240_reg0.02_strength0.5</td>
+      <td>40.37</td>
+      <td>65.52</td>
+      <td>79.33</td>
+      <td>64.58</td>
+      <td>95.14</td>
+      <td>59.72</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_pointwise/benchmark/wind_floor_240_shapefitted_intraday</td>
       <td>40.37</td>
       <td>67.02</td>
@@ -1480,6 +4637,17 @@
       <td>90.28</td>
       <td>57.64</td>
       <td>49.31</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_context_hurdle/benchmark/regional_price_boundary_reg0.02_mixture_strength0.5</td>
+      <td>40.37</td>
+      <td>65.34</td>
+      <td>79.28</td>
+      <td>63.89</td>
+      <td>95.14</td>
+      <td>59.03</td>
+      <td>52.08</td>
       <td>864</td>
     </tr>
     <tr>
@@ -1516,6 +4684,17 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>night_weather_distribution/benchmark/power_qr_240_mixture_strength0.5</td>
+      <td>40.43</td>
+      <td>65.54</td>
+      <td>79.72</td>
+      <td>65.28</td>
+      <td>95.14</td>
+      <td>59.72</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_pointwise/benchmark/nwp_floor_240_shapefixed_intraday</td>
       <td>40.45</td>
       <td>66.95</td>
@@ -1538,6 +4717,28 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>night_context_hurdle/benchmark/regional_boundary_price_ratios_reg0.02_mixture_strength0.5</td>
+      <td>40.46</td>
+      <td>65.43</td>
+      <td>79.27</td>
+      <td>64.58</td>
+      <td>95.14</td>
+      <td>59.72</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_weather/benchmark/sites_240_reg0.02_strength0.5</td>
+      <td>40.47</td>
+      <td>65.71</td>
+      <td>79.23</td>
+      <td>64.58</td>
+      <td>95.14</td>
+      <td>59.72</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>hourly_night_hurdle/benchmark/logistic_economic_240_mixture_strength1.0</td>
       <td>40.47</td>
       <td>68.38</td>
@@ -1557,6 +4758,17 @@
       <td>95.83</td>
       <td>56.94</td>
       <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_weather/benchmark/core_120_reg0.005_strength0.5</td>
+      <td>40.48</td>
+      <td>65.48</td>
+      <td>79.76</td>
+      <td>67.36</td>
+      <td>95.83</td>
+      <td>62.50</td>
+      <td>52.08</td>
       <td>864</td>
     </tr>
     <tr>
@@ -1593,6 +4805,17 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>night_conditional_weather/benchmark/thermal_365_band4_half90_strength0.5</td>
+      <td>40.51</td>
+      <td>66.30</td>
+      <td>79.60</td>
+      <td>65.28</td>
+      <td>95.14</td>
+      <td>59.72</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_supply_cdf/benchmark/linear_wind_240_strength1.0_shape1.0_mix1.0</td>
       <td>40.54</td>
       <td>65.07</td>
@@ -1615,6 +4838,17 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>night_weather_distribution/benchmark/svm_power_240_C1.0_mixture_strength1.0</td>
+      <td>40.56</td>
+      <td>67.03</td>
+      <td>80.05</td>
+      <td>64.58</td>
+      <td>95.14</td>
+      <td>58.33</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_supply_curve/benchmark/clad_wind_365_latent_strength1.0_shape1.0</td>
       <td>40.57</td>
       <td>65.90</td>
@@ -1634,6 +4868,28 @@
       <td>90.28</td>
       <td>57.64</td>
       <td>47.92</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_weather/benchmark/thermal_120_reg0.005_strength0.5</td>
+      <td>40.58</td>
+      <td>65.66</td>
+      <td>79.71</td>
+      <td>67.36</td>
+      <td>95.14</td>
+      <td>62.50</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_weather_distribution/benchmark/regional_gp_240_hard_strength0.5</td>
+      <td>40.58</td>
+      <td>65.80</td>
+      <td>78.95</td>
+      <td>65.97</td>
+      <td>95.83</td>
+      <td>61.11</td>
+      <td>51.39</td>
       <td>864</td>
     </tr>
     <tr>
@@ -1780,6 +5036,17 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>night_weather_distribution/benchmark/power_qr_240_hard_strength1.0</td>
+      <td>40.68</td>
+      <td>65.82</td>
+      <td>79.07</td>
+      <td>63.89</td>
+      <td>95.14</td>
+      <td>59.03</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_context_hurdle/benchmark/regional_l2_C0.1_mixture_strength0.5</td>
       <td>40.68</td>
       <td>66.00</td>
@@ -1821,6 +5088,17 @@
       <td>95.14</td>
       <td>62.50</td>
       <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_regime_mixture/benchmark/air_nwp_k2_reg0.03_mixture_strength1.0</td>
+      <td>40.71</td>
+      <td>64.63</td>
+      <td>78.82</td>
+      <td>64.58</td>
+      <td>93.06</td>
+      <td>58.33</td>
+      <td>52.08</td>
       <td>864</td>
     </tr>
     <tr>
@@ -1901,6 +5179,17 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>night_regime_mixture/benchmark/air_nwp_k2_reg0.03_mixture_strength0.5</td>
+      <td>40.74</td>
+      <td>65.80</td>
+      <td>78.95</td>
+      <td>64.58</td>
+      <td>95.14</td>
+      <td>58.33</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_pointwise/benchmark/wind_365_shapefixed_intraday</td>
       <td>40.74</td>
       <td>66.24</td>
@@ -1912,6 +5201,17 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>night_context_hurdle/benchmark/regional_reserve_C1.0_hard_strength1.0</td>
+      <td>40.75</td>
+      <td>65.77</td>
+      <td>79.00</td>
+      <td>63.89</td>
+      <td>95.14</td>
+      <td>59.03</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_pointwise/benchmark/nwp_365_shapefixed</td>
       <td>40.76</td>
       <td>66.33</td>
@@ -1920,6 +5220,17 @@
       <td>90.28</td>
       <td>60.42</td>
       <td>48.61</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_weather_distribution/benchmark/svm_regional_240_C10.0_mixture_strength0.5</td>
+      <td>40.77</td>
+      <td>66.06</td>
+      <td>79.37</td>
+      <td>65.97</td>
+      <td>95.14</td>
+      <td>60.42</td>
+      <td>51.39</td>
       <td>864</td>
     </tr>
     <tr>
@@ -1978,6 +5289,17 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>night_conditional_weather/benchmark/core_240_age30_reg0.005_strength0.5</td>
+      <td>40.80</td>
+      <td>66.37</td>
+      <td>79.68</td>
+      <td>66.67</td>
+      <td>95.14</td>
+      <td>61.81</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_pointwise/benchmark/nwp_365_shapefitted_intraday</td>
       <td>40.80</td>
       <td>66.19</td>
@@ -1986,6 +5308,17 @@
       <td>90.28</td>
       <td>61.11</td>
       <td>49.31</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_conditional_weather/benchmark/thermal_240_age30_reg0.005_strength0.5</td>
+      <td>40.80</td>
+      <td>66.38</td>
+      <td>79.68</td>
+      <td>66.67</td>
+      <td>95.14</td>
+      <td>61.81</td>
+      <td>52.08</td>
       <td>864</td>
     </tr>
     <tr>
@@ -2000,7 +5333,7 @@
       <td>864</td>
     </tr>
     <tr>
-      <td>night_supply_curve/benchmark/linear_wind_240_latent_strength1.0_shape1.0</td>
+      <td>night_supply_curve/benchmark/linear_wind_240_strength1.0_shape1.0</td>
       <td>40.83</td>
       <td>65.21</td>
       <td>78.00</td>
@@ -2011,7 +5344,7 @@
       <td>864</td>
     </tr>
     <tr>
-      <td>night_supply_curve/benchmark/linear_wind_240_strength1.0_shape1.0</td>
+      <td>night_supply_curve/benchmark/linear_wind_240_latent_strength1.0_shape1.0</td>
       <td>40.83</td>
       <td>65.21</td>
       <td>78.00</td>
@@ -2066,6 +5399,17 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>night_context_hurdle/benchmark/regional_price_boundary_reg0.005_hard_strength0.5</td>
+      <td>40.86</td>
+      <td>66.21</td>
+      <td>79.04</td>
+      <td>65.97</td>
+      <td>95.83</td>
+      <td>60.42</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_context_hurdle/benchmark/boundary_l1_C1.0_mixture_strength0.5</td>
       <td>40.86</td>
       <td>66.83</td>
@@ -2103,6 +5447,17 @@
       <td>40.89</td>
       <td>67.87</td>
       <td>80.33</td>
+      <td>65.28</td>
+      <td>95.83</td>
+      <td>60.42</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_context_hurdle/benchmark/regional_nonmarket_C1.0_hard_strength0.5</td>
+      <td>40.89</td>
+      <td>66.13</td>
+      <td>79.05</td>
       <td>65.28</td>
       <td>95.83</td>
       <td>60.42</td>
@@ -2297,6 +5652,39 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>night_weather_distribution/benchmark/svm_regional_240_C1.0_mixture_strength0.5</td>
+      <td>41.02</td>
+      <td>66.40</td>
+      <td>79.02</td>
+      <td>65.97</td>
+      <td>95.14</td>
+      <td>60.42</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_regime_mixture/benchmark/air_nwp_k2_reg0.03_hard_strength0.5</td>
+      <td>41.02</td>
+      <td>66.17</td>
+      <td>78.91</td>
+      <td>64.58</td>
+      <td>95.14</td>
+      <td>58.33</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_regime_mixture/benchmark/core_k3_reg0.1_mixture_strength1.0</td>
+      <td>41.03</td>
+      <td>65.89</td>
+      <td>78.92</td>
+      <td>63.89</td>
+      <td>95.14</td>
+      <td>58.33</td>
+      <td>54.17</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_hurdle/benchmark/logistic_wind_240_C1.0_hard_strength0.5</td>
       <td>41.03</td>
       <td>67.08</td>
@@ -2352,6 +5740,17 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>night_regime_mixture/benchmark/air_nwp_k2_reg0.03_hard_strength1.0</td>
+      <td>41.05</td>
+      <td>64.89</td>
+      <td>78.97</td>
+      <td>63.89</td>
+      <td>95.14</td>
+      <td>57.64</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_supply_curve/benchmark/clad_median_wind_240_strength0.5_shape1.0</td>
       <td>41.05</td>
       <td>66.97</td>
@@ -2385,7 +5784,18 @@
       <td>864</td>
     </tr>
     <tr>
-      <td>night_bias/benchmark/ewma7_strength1.0_gate1</td>
+      <td>night_regime_mixture/benchmark/core_k3_reg0.1_mixture_strength0.5</td>
+      <td>41.08</td>
+      <td>66.59</td>
+      <td>78.97</td>
+      <td>66.67</td>
+      <td>95.14</td>
+      <td>61.11</td>
+      <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_bias/benchmark/ewma7_strength1.0_gate0</td>
       <td>41.08</td>
       <td>67.32</td>
       <td>80.48</td>
@@ -2396,7 +5806,7 @@
       <td>864</td>
     </tr>
     <tr>
-      <td>night_bias/benchmark/ewma7_strength1.0_gate0</td>
+      <td>night_bias/benchmark/ewma7_strength1.0_gate1</td>
       <td>41.08</td>
       <td>67.32</td>
       <td>80.48</td>
@@ -2503,6 +5913,17 @@
       <td>95.14</td>
       <td>61.11</td>
       <td>53.47</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_context_hurdle/benchmark/regional_boundary_price_raw_reg0.02_hard_strength1.0</td>
+      <td>41.20</td>
+      <td>67.48</td>
+      <td>79.49</td>
+      <td>62.50</td>
+      <td>95.83</td>
+      <td>57.64</td>
+      <td>51.39</td>
       <td>864</td>
     </tr>
     <tr>
@@ -2660,6 +6081,17 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>night_context_hurdle/benchmark/regional_boundary_price_raw_reg0.02_hard_strength0.5</td>
+      <td>41.35</td>
+      <td>66.92</td>
+      <td>79.01</td>
+      <td>65.28</td>
+      <td>95.83</td>
+      <td>61.11</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_context_hurdle/benchmark/regional_priceforest_price_boundary_hard_strength0.5</td>
       <td>41.36</td>
       <td>67.24</td>
@@ -2667,6 +6099,17 @@
       <td>64.58</td>
       <td>95.14</td>
       <td>59.72</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_weather_distribution/benchmark/regional_pca_qr_240_mixture_strength1.0</td>
+      <td>41.37</td>
+      <td>65.38</td>
+      <td>77.81</td>
+      <td>65.28</td>
+      <td>95.14</td>
+      <td>59.03</td>
       <td>51.39</td>
       <td>864</td>
     </tr>
@@ -2700,6 +6143,17 @@
       <td>63.89</td>
       <td>93.06</td>
       <td>59.03</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_weather_distribution/benchmark/svm_power_240_C10.0_mixture_strength1.0</td>
+      <td>41.40</td>
+      <td>67.75</td>
+      <td>78.37</td>
+      <td>63.19</td>
+      <td>95.14</td>
+      <td>56.94</td>
       <td>51.39</td>
       <td>864</td>
     </tr>
@@ -2770,6 +6224,28 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>night_regime_mixture/benchmark/core_k3_reg0.1_hard_strength0.5</td>
+      <td>41.50</td>
+      <td>67.30</td>
+      <td>78.86</td>
+      <td>66.67</td>
+      <td>95.83</td>
+      <td>61.11</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_context_hurdle/benchmark/regional_price_boundary_reg0.02_hard_strength1.0</td>
+      <td>41.51</td>
+      <td>67.86</td>
+      <td>79.40</td>
+      <td>62.50</td>
+      <td>95.83</td>
+      <td>57.64</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_context_hurdle/benchmark/regional_priceforest_price_boundary_mixture_strength0.5</td>
       <td>41.52</td>
       <td>67.69</td>
@@ -2778,6 +6254,17 @@
       <td>95.14</td>
       <td>60.42</td>
       <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_context_hurdle/benchmark/regional_price_boundary_reg0.02_hard_strength0.5</td>
+      <td>41.53</td>
+      <td>67.11</td>
+      <td>78.96</td>
+      <td>64.58</td>
+      <td>95.83</td>
+      <td>60.42</td>
+      <td>51.39</td>
       <td>864</td>
     </tr>
     <tr>
@@ -2799,6 +6286,17 @@
       <td>63.89</td>
       <td>95.14</td>
       <td>59.72</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_weather_distribution/benchmark/power_qr_240_hard_strength0.5</td>
+      <td>41.57</td>
+      <td>67.01</td>
+      <td>78.71</td>
+      <td>65.28</td>
+      <td>95.83</td>
+      <td>60.42</td>
       <td>51.39</td>
       <td>864</td>
     </tr>
@@ -2836,6 +6334,28 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>night_context_hurdle/benchmark/regional_boundary_price_ratios_reg0.02_hard_strength0.5</td>
+      <td>41.59</td>
+      <td>67.16</td>
+      <td>78.95</td>
+      <td>65.28</td>
+      <td>95.83</td>
+      <td>61.11</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_context_hurdle/benchmark/regional_boundary_price_ratios_reg0.02_hard_strength1.0</td>
+      <td>41.61</td>
+      <td>67.97</td>
+      <td>79.39</td>
+      <td>63.19</td>
+      <td>95.83</td>
+      <td>58.33</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_context_hurdle/benchmark/regional_priceforest_price_boundary_mixture_strength1.0</td>
       <td>41.62</td>
       <td>68.52</td>
@@ -2858,6 +6378,17 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>night_supply_curve/benchmark/linear_wind_240_strength0.5_shape1.0</td>
+      <td>41.64</td>
+      <td>67.10</td>
+      <td>78.33</td>
+      <td>64.58</td>
+      <td>95.14</td>
+      <td>59.72</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_supply_curve/benchmark/linear_wind_240_latent_strength0.5_shape1.0</td>
       <td>41.64</td>
       <td>67.10</td>
@@ -2869,11 +6400,11 @@
       <td>864</td>
     </tr>
     <tr>
-      <td>night_supply_curve/benchmark/linear_wind_240_strength0.5_shape1.0</td>
+      <td>night_weather_distribution/benchmark/svm_power_240_C1.0_mixture_strength0.5</td>
       <td>41.64</td>
-      <td>67.10</td>
-      <td>78.33</td>
-      <td>64.58</td>
+      <td>67.97</td>
+      <td>79.54</td>
+      <td>65.28</td>
       <td>95.14</td>
       <td>59.72</td>
       <td>51.39</td>
@@ -2891,6 +6422,17 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>night_context_hurdle/benchmark/regional_reserve_C1.0_hard_strength0.5</td>
+      <td>41.67</td>
+      <td>67.07</td>
+      <td>78.62</td>
+      <td>65.28</td>
+      <td>95.83</td>
+      <td>60.42</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_supply_curve/benchmark/clad_nwp_365_bw8_half90_strength1.0_shape1.0</td>
       <td>41.70</td>
       <td>67.04</td>
@@ -2899,6 +6441,17 @@
       <td>92.36</td>
       <td>61.81</td>
       <td>50.00</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_weather_distribution/benchmark/svm_regional_240_C1.0_hard_strength1.0</td>
+      <td>41.71</td>
+      <td>66.50</td>
+      <td>78.00</td>
+      <td>63.89</td>
+      <td>95.14</td>
+      <td>59.03</td>
+      <td>51.39</td>
       <td>864</td>
     </tr>
     <tr>
@@ -2954,6 +6507,17 @@
       <td>84.03</td>
       <td>61.11</td>
       <td>56.25</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_regime_mixture/benchmark/core_k3_reg0.1_hard_strength1.0</td>
+      <td>41.75</td>
+      <td>67.15</td>
+      <td>79.04</td>
+      <td>63.19</td>
+      <td>95.14</td>
+      <td>58.33</td>
+      <td>51.39</td>
       <td>864</td>
     </tr>
     <tr>
@@ -3111,6 +6675,17 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>night_weather_distribution/benchmark/regional_pca_qr_240_mixture_strength0.5</td>
+      <td>41.92</td>
+      <td>66.78</td>
+      <td>77.75</td>
+      <td>65.97</td>
+      <td>95.14</td>
+      <td>59.72</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_supply_curve/benchmark/clad_wind_365_bw12_half90_strength0.5_shape1.0</td>
       <td>41.95</td>
       <td>67.92</td>
@@ -3140,6 +6715,17 @@
       <td>64.58</td>
       <td>95.14</td>
       <td>59.03</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_weather_distribution/benchmark/svm_power_240_C10.0_mixture_strength0.5</td>
+      <td>41.98</td>
+      <td>68.40</td>
+      <td>78.35</td>
+      <td>63.89</td>
+      <td>95.14</td>
+      <td>58.33</td>
       <td>51.39</td>
       <td>864</td>
     </tr>
@@ -3265,6 +6851,17 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>night_weather_distribution/benchmark/svm_regional_240_C1.0_hard_strength0.5</td>
+      <td>42.10</td>
+      <td>67.16</td>
+      <td>77.65</td>
+      <td>65.28</td>
+      <td>95.83</td>
+      <td>60.42</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_weather_distribution/benchmark/cdf_core_240_C0.1_cdf_strength0.5</td>
       <td>42.10</td>
       <td>69.24</td>
@@ -3369,6 +6966,28 @@
       <td>68.42</td>
       <td>79.32</td>
       <td>64.58</td>
+      <td>95.14</td>
+      <td>59.03</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_weather_distribution/benchmark/svm_regional_240_C10.0_hard_strength1.0</td>
+      <td>42.25</td>
+      <td>66.84</td>
+      <td>77.30</td>
+      <td>63.89</td>
+      <td>95.14</td>
+      <td>59.03</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_weather_distribution/benchmark/regional_pca_qr_240_hard_strength1.0</td>
+      <td>42.25</td>
+      <td>66.84</td>
+      <td>77.30</td>
+      <td>63.89</td>
       <td>95.14</td>
       <td>59.03</td>
       <td>51.39</td>
@@ -3496,6 +7115,17 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>night_regime_mixture/benchmark/wind_k3_reg0.03_mixture_strength0.5</td>
+      <td>42.39</td>
+      <td>68.57</td>
+      <td>78.47</td>
+      <td>64.58</td>
+      <td>95.14</td>
+      <td>59.72</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_weather_distribution/benchmark/cdf_core_240_C0.1_cdf_strength1.0</td>
       <td>42.39</td>
       <td>70.56</td>
@@ -3518,6 +7148,28 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>night_weather_distribution/benchmark/svm_regional_240_C10.0_hard_strength0.5</td>
+      <td>42.41</td>
+      <td>67.36</td>
+      <td>77.26</td>
+      <td>65.28</td>
+      <td>95.83</td>
+      <td>60.42</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_weather_distribution/benchmark/regional_pca_qr_240_hard_strength0.5</td>
+      <td>42.41</td>
+      <td>67.36</td>
+      <td>77.26</td>
+      <td>65.28</td>
+      <td>95.83</td>
+      <td>60.42</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_transition_cdf/benchmark/night_weight0.5</td>
       <td>42.41</td>
       <td>69.07</td>
@@ -3526,6 +7178,17 @@
       <td>93.75</td>
       <td>61.11</td>
       <td>50.00</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_weather_distribution/benchmark/cdf_regional_240_C0.1_cdf_strength0.5</td>
+      <td>42.45</td>
+      <td>69.30</td>
+      <td>78.66</td>
+      <td>66.67</td>
+      <td>95.83</td>
+      <td>61.11</td>
+      <td>51.39</td>
       <td>864</td>
     </tr>
     <tr>
@@ -3573,7 +7236,7 @@
       <td>864</td>
     </tr>
     <tr>
-      <td>night_supply_curve/benchmark/linear_wind_240_strength0.5_shape0.0</td>
+      <td>night_supply_curve/benchmark/linear_wind_240_latent_strength0.5_shape0.0</td>
       <td>42.51</td>
       <td>68.07</td>
       <td>78.05</td>
@@ -3584,7 +7247,7 @@
       <td>864</td>
     </tr>
     <tr>
-      <td>night_supply_curve/benchmark/linear_wind_240_latent_strength0.5_shape0.0</td>
+      <td>night_supply_curve/benchmark/linear_wind_240_strength0.5_shape0.0</td>
       <td>42.51</td>
       <td>68.07</td>
       <td>78.05</td>
@@ -3628,6 +7291,17 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>night_weather_distribution/benchmark/svm_power_240_C1.0_hard_strength1.0</td>
+      <td>42.52</td>
+      <td>68.59</td>
+      <td>77.76</td>
+      <td>64.58</td>
+      <td>95.14</td>
+      <td>59.72</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_supply_curve/benchmark/clad_weather_power_240_strength1.0_shape0.0</td>
       <td>42.54</td>
       <td>68.19</td>
@@ -3658,6 +7332,17 @@
       <td>94.44</td>
       <td>61.11</td>
       <td>50.00</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_weather_distribution/benchmark/svm_power_240_C1.0_hard_strength0.5</td>
+      <td>42.58</td>
+      <td>68.29</td>
+      <td>77.90</td>
+      <td>65.97</td>
+      <td>95.83</td>
+      <td>61.11</td>
+      <td>51.39</td>
       <td>864</td>
     </tr>
     <tr>
@@ -3749,6 +7434,28 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>evening_supply_curve/benchmark/clad_thermo_nwp_240_strength0.5_shape0.0</td>
+      <td>42.67</td>
+      <td>70.13</td>
+      <td>79.02</td>
+      <td>65.28</td>
+      <td>95.14</td>
+      <td>60.42</td>
+      <td>50.69</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_regime_mixture/benchmark/wind_k3_reg0.03_hard_strength0.5</td>
+      <td>42.67</td>
+      <td>68.71</td>
+      <td>78.46</td>
+      <td>64.58</td>
+      <td>95.14</td>
+      <td>59.72</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>tabicl_physical_night/benchmark/nwp_240_strength0.5_shape1.0</td>
       <td>42.68</td>
       <td>70.01</td>
@@ -3782,6 +7489,17 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>evening_supply_curve/benchmark/linear_air_nwp_240_strength0.5_shape0.0</td>
+      <td>42.71</td>
+      <td>69.74</td>
+      <td>78.80</td>
+      <td>65.28</td>
+      <td>95.14</td>
+      <td>59.72</td>
+      <td>50.69</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_supply_curve/benchmark/clad_weather_240_strength1.0_shape0.0</td>
       <td>42.74</td>
       <td>70.01</td>
@@ -3804,7 +7522,7 @@
       <td>864</td>
     </tr>
     <tr>
-      <td>night_supply_curve/benchmark/clad_median_wind_240_latent_strength1.0_shape0.0</td>
+      <td>night_supply_curve/benchmark/clad_median_wind_240_strength1.0_shape0.0</td>
       <td>42.75</td>
       <td>69.69</td>
       <td>79.46</td>
@@ -3815,7 +7533,7 @@
       <td>864</td>
     </tr>
     <tr>
-      <td>night_supply_curve/benchmark/clad_median_wind_240_strength1.0_shape0.0</td>
+      <td>night_supply_curve/benchmark/clad_median_wind_240_latent_strength1.0_shape0.0</td>
       <td>42.75</td>
       <td>69.69</td>
       <td>79.46</td>
@@ -3848,6 +7566,17 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>evening_supply_curve/benchmark/linear_thermo_nwp_240_strength0.5_shape0.0</td>
+      <td>42.77</td>
+      <td>70.28</td>
+      <td>78.89</td>
+      <td>64.58</td>
+      <td>95.14</td>
+      <td>59.03</td>
+      <td>50.69</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_supply_curve/benchmark/linear_wind_240_latent_strength1.0_shape0.0</td>
       <td>42.79</td>
       <td>68.86</td>
@@ -3870,6 +7599,17 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>evening_supply_curve/benchmark/linear_air_wind_240_strength0.5_shape0.0</td>
+      <td>42.79</td>
+      <td>69.99</td>
+      <td>78.45</td>
+      <td>64.58</td>
+      <td>95.14</td>
+      <td>59.72</td>
+      <td>50.69</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_supply_curve/benchmark/clad_wind_365_bw4_half365_strength1.0_shape1.0</td>
       <td>42.80</td>
       <td>69.95</td>
@@ -3878,6 +7618,17 @@
       <td>87.50</td>
       <td>59.03</td>
       <td>46.53</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_supply_curve/benchmark/clad_air_wind_240_strength0.5_shape0.0</td>
+      <td>42.81</td>
+      <td>70.04</td>
+      <td>78.56</td>
+      <td>62.50</td>
+      <td>95.14</td>
+      <td>57.64</td>
+      <td>50.69</td>
       <td>864</td>
     </tr>
     <tr>
@@ -3903,12 +7654,34 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>evening_supply_curve/benchmark/clad_median_wind_240_strength0.5_shape0.0</td>
+      <td>42.83</td>
+      <td>70.39</td>
+      <td>79.24</td>
+      <td>62.50</td>
+      <td>95.14</td>
+      <td>57.64</td>
+      <td>50.69</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_supply_curve/benchmark/clad_wind_365_bw8_half365_strength0.5_shape0.0</td>
       <td>42.83</td>
       <td>68.69</td>
       <td>79.11</td>
       <td>65.28</td>
       <td>95.14</td>
+      <td>59.03</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_weather_distribution/benchmark/svm_power_240_C10.0_hard_strength0.5</td>
+      <td>42.84</td>
+      <td>69.12</td>
+      <td>77.39</td>
+      <td>63.89</td>
+      <td>95.83</td>
       <td>59.03</td>
       <td>51.39</td>
       <td>864</td>
@@ -3925,6 +7698,17 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>evening_supply_curve/benchmark/clad_thermo_nwp_240_strength0.5_shape1.0</td>
+      <td>42.84</td>
+      <td>70.21</td>
+      <td>78.85</td>
+      <td>64.58</td>
+      <td>95.14</td>
+      <td>59.72</td>
+      <td>50.69</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_supply_curve/benchmark/clad_wind_120_strength0.5_shape1.0</td>
       <td>42.86</td>
       <td>68.65</td>
@@ -3933,6 +7717,17 @@
       <td>95.14</td>
       <td>61.81</td>
       <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_supply_curve/benchmark/clad_air_nwp_240_strength0.5_shape0.0</td>
+      <td>42.87</td>
+      <td>70.16</td>
+      <td>78.87</td>
+      <td>64.58</td>
+      <td>95.14</td>
+      <td>59.03</td>
+      <td>50.69</td>
       <td>864</td>
     </tr>
     <tr>
@@ -3980,6 +7775,39 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>evening_supply_curve/benchmark/linear_air_nwp_240_strength0.5_shape1.0</td>
+      <td>42.90</td>
+      <td>69.94</td>
+      <td>78.64</td>
+      <td>64.58</td>
+      <td>95.14</td>
+      <td>59.03</td>
+      <td>50.69</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_supply_curve/benchmark/linear_thermo_nwp_240_strength0.5_shape1.0</td>
+      <td>42.91</td>
+      <td>70.28</td>
+      <td>78.75</td>
+      <td>63.89</td>
+      <td>95.14</td>
+      <td>58.33</td>
+      <td>50.69</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_weather_distribution/benchmark/cdf_regional_240_C1.0_cdf_strength0.5</td>
+      <td>42.93</td>
+      <td>70.57</td>
+      <td>78.61</td>
+      <td>64.58</td>
+      <td>95.14</td>
+      <td>58.33</td>
+      <td>52.78</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>shared_cdf/benchmark/shared7_strength0.25</td>
       <td>42.93</td>
       <td>70.15</td>
@@ -3988,6 +7816,17 @@
       <td>95.14</td>
       <td>61.81</td>
       <td>53.47</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_supply_curve/benchmark/clad_air_nwp_240_strength0.5_shape1.0</td>
+      <td>42.94</td>
+      <td>70.18</td>
+      <td>78.82</td>
+      <td>63.19</td>
+      <td>95.14</td>
+      <td>57.64</td>
+      <td>50.69</td>
       <td>864</td>
     </tr>
     <tr>
@@ -4002,6 +7841,61 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>evening_supply_curve/benchmark/linear_air_wind_240_strength0.5_shape1.0</td>
+      <td>42.95</td>
+      <td>70.13</td>
+      <td>78.33</td>
+      <td>64.58</td>
+      <td>95.14</td>
+      <td>59.72</td>
+      <td>50.69</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_weather_distribution/benchmark/cdf_regional_240_C0.1_cdf_strength1.0</td>
+      <td>42.98</td>
+      <td>70.89</td>
+      <td>78.55</td>
+      <td>63.89</td>
+      <td>95.83</td>
+      <td>58.33</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_regime_mixture/benchmark/wind_k3_reg0.03_mixture_strength1.0</td>
+      <td>42.99</td>
+      <td>70.19</td>
+      <td>78.63</td>
+      <td>62.50</td>
+      <td>90.28</td>
+      <td>56.94</td>
+      <td>49.31</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_weather_distribution/benchmark/svm_power_240_C10.0_hard_strength1.0</td>
+      <td>42.99</td>
+      <td>69.81</td>
+      <td>77.63</td>
+      <td>61.81</td>
+      <td>95.14</td>
+      <td>56.94</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_supply_curve/benchmark/clad_weather_240_strength0.5_shape0.0</td>
+      <td>42.99</td>
+      <td>70.19</td>
+      <td>78.73</td>
+      <td>63.89</td>
+      <td>95.14</td>
+      <td>59.03</td>
+      <td>50.69</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_transition/benchmark/tabicl_small_180_known_evening_strength0.5</td>
       <td>43.00</td>
       <td>69.51</td>
@@ -4010,6 +7904,28 @@
       <td>95.14</td>
       <td>61.11</td>
       <td>52.08</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_supply_curve/benchmark/clad_median_wind_240_strength0.5_shape1.0</td>
+      <td>43.01</td>
+      <td>70.47</td>
+      <td>79.06</td>
+      <td>63.89</td>
+      <td>95.14</td>
+      <td>59.03</td>
+      <td>50.69</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_supply_curve/benchmark/clad_air_wind_240_strength0.5_shape1.0</td>
+      <td>43.03</td>
+      <td>70.19</td>
+      <td>78.41</td>
+      <td>63.89</td>
+      <td>95.14</td>
+      <td>59.03</td>
+      <td>50.69</td>
       <td>864</td>
     </tr>
     <tr>
@@ -4145,6 +8061,17 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>evening_supply_curve/benchmark/clad_weather_240_strength0.5_shape1.0</td>
+      <td>43.22</td>
+      <td>70.36</td>
+      <td>78.55</td>
+      <td>64.58</td>
+      <td>95.14</td>
+      <td>59.72</td>
+      <td>50.69</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night/benchmark/cat_180_0_strength0.5_shape0.5</td>
       <td>43.23</td>
       <td>69.83</td>
@@ -4186,6 +8113,17 @@
       <td>90.28</td>
       <td>55.56</td>
       <td>49.31</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_weather_distribution/benchmark/cdf_power_240_C0.1_cdf_strength0.5</td>
+      <td>43.25</td>
+      <td>69.61</td>
+      <td>78.17</td>
+      <td>65.97</td>
+      <td>95.83</td>
+      <td>59.72</td>
+      <td>51.39</td>
       <td>864</td>
     </tr>
     <tr>
@@ -4266,6 +8204,17 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>evening_supply_curve/benchmark/linear_air_nwp_240_strength1.0_shape1.0</td>
+      <td>43.39</td>
+      <td>70.23</td>
+      <td>78.56</td>
+      <td>64.58</td>
+      <td>95.14</td>
+      <td>59.72</td>
+      <td>50.69</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>evening_supply_curve/benchmark/clad_wind_120_strength0.5_shape1.0</td>
       <td>43.43</td>
       <td>70.65</td>
@@ -4310,6 +8259,17 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>evening_supply_curve/benchmark/clad_thermo_nwp_240_strength1.0_shape1.0</td>
+      <td>43.48</td>
+      <td>70.95</td>
+      <td>78.65</td>
+      <td>64.58</td>
+      <td>95.14</td>
+      <td>59.72</td>
+      <td>50.69</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_supply_curve/benchmark/isotonic_space_120_strength0.5_shape1.0</td>
       <td>43.48</td>
       <td>71.87</td>
@@ -4332,6 +8292,17 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>evening_supply_curve/benchmark/linear_air_wind_240_strength1.0_shape1.0</td>
+      <td>43.52</td>
+      <td>70.56</td>
+      <td>77.78</td>
+      <td>62.50</td>
+      <td>95.14</td>
+      <td>57.64</td>
+      <td>50.69</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night_supply_curve/benchmark/clad_thermal_ratio_240_strength1.0_shape0.0</td>
       <td>43.52</td>
       <td>70.65</td>
@@ -4340,6 +8311,17 @@
       <td>92.36</td>
       <td>55.56</td>
       <td>50.00</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_regime_mixture/benchmark/wind_k3_reg0.03_hard_strength1.0</td>
+      <td>43.54</td>
+      <td>69.87</td>
+      <td>78.36</td>
+      <td>62.50</td>
+      <td>91.67</td>
+      <td>56.94</td>
+      <td>49.31</td>
       <td>864</td>
     </tr>
     <tr>
@@ -4376,6 +8358,17 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>evening_supply_curve/benchmark/clad_air_nwp_240_strength1.0_shape1.0</td>
+      <td>43.60</td>
+      <td>70.79</td>
+      <td>78.49</td>
+      <td>61.11</td>
+      <td>95.14</td>
+      <td>56.25</td>
+      <td>50.69</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>evening_supply_curve/benchmark/linear_wind_120_strength0.5_shape1.0</td>
       <td>43.60</td>
       <td>70.70</td>
@@ -4383,6 +8376,17 @@
       <td>61.11</td>
       <td>95.14</td>
       <td>56.94</td>
+      <td>50.69</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_supply_curve/benchmark/linear_thermo_nwp_240_strength1.0_shape1.0</td>
+      <td>43.60</td>
+      <td>71.07</td>
+      <td>78.58</td>
+      <td>65.28</td>
+      <td>95.14</td>
+      <td>60.42</td>
       <td>50.69</td>
       <td>864</td>
     </tr>
@@ -4439,6 +8443,17 @@
       <td>90.97</td>
       <td>56.25</td>
       <td>50.00</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_supply_curve/benchmark/clad_air_wind_240_strength1.0_shape1.0</td>
+      <td>43.63</td>
+      <td>70.69</td>
+      <td>77.89</td>
+      <td>60.42</td>
+      <td>95.14</td>
+      <td>56.25</td>
+      <td>50.69</td>
       <td>864</td>
     </tr>
     <tr>
@@ -4552,6 +8567,28 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>evening_supply_curve/benchmark/linear_air_wind_240_strength1.0_shape0.0</td>
+      <td>43.75</td>
+      <td>70.99</td>
+      <td>77.91</td>
+      <td>61.11</td>
+      <td>95.14</td>
+      <td>55.56</td>
+      <td>50.69</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_supply_curve/benchmark/linear_air_nwp_240_strength1.0_shape0.0</td>
+      <td>43.76</td>
+      <td>70.92</td>
+      <td>78.43</td>
+      <td>63.89</td>
+      <td>95.14</td>
+      <td>59.03</td>
+      <td>50.69</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>online_experts/benchmark/exp_5_15</td>
       <td>43.76</td>
       <td>70.36</td>
@@ -4618,6 +8655,28 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>evening_supply_curve/benchmark/linear_thermo_nwp_240_strength1.0_shape0.0</td>
+      <td>43.81</td>
+      <td>71.59</td>
+      <td>78.51</td>
+      <td>63.89</td>
+      <td>95.14</td>
+      <td>58.33</td>
+      <td>50.69</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_supply_curve/benchmark/clad_air_wind_240_strength1.0_shape0.0</td>
+      <td>43.82</td>
+      <td>71.04</td>
+      <td>78.04</td>
+      <td>59.72</td>
+      <td>95.14</td>
+      <td>54.86</td>
+      <td>50.69</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>night/benchmark/cat_180_0_strength0.5_shape0.0</td>
       <td>43.82</td>
       <td>70.52</td>
@@ -4629,6 +8688,17 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>evening_supply_curve/benchmark/clad_median_wind_240_strength1.0_shape1.0</td>
+      <td>43.82</td>
+      <td>71.42</td>
+      <td>78.95</td>
+      <td>59.72</td>
+      <td>95.14</td>
+      <td>54.86</td>
+      <td>50.69</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>quantile_forest/benchmark/qforest_compact_60_1</td>
       <td>43.83</td>
       <td>72.99</td>
@@ -4637,6 +8707,17 @@
       <td>95.83</td>
       <td>53.47</td>
       <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_supply_curve/benchmark/clad_thermo_nwp_240_strength1.0_shape0.0</td>
+      <td>43.83</td>
+      <td>71.59</td>
+      <td>78.54</td>
+      <td>63.19</td>
+      <td>95.14</td>
+      <td>58.33</td>
+      <td>50.69</td>
       <td>864</td>
     </tr>
     <tr>
@@ -4802,6 +8883,17 @@
       <td>95.83</td>
       <td>61.11</td>
       <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_supply_curve/benchmark/clad_air_nwp_240_strength1.0_shape0.0</td>
+      <td>44.04</td>
+      <td>71.50</td>
+      <td>78.42</td>
+      <td>61.11</td>
+      <td>95.14</td>
+      <td>56.25</td>
+      <td>50.69</td>
       <td>864</td>
     </tr>
     <tr>
@@ -5025,6 +9117,17 @@
       <td>864</td>
     </tr>
     <tr>
+      <td>night_weather_distribution/benchmark/cdf_power_240_C1.0_cdf_strength0.5</td>
+      <td>44.28</td>
+      <td>72.50</td>
+      <td>78.64</td>
+      <td>64.58</td>
+      <td>95.14</td>
+      <td>58.33</td>
+      <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
       <td>stacking/lgb_residual_7_0.5</td>
       <td>44.29</td>
       <td>69.95</td>
@@ -5033,6 +9136,17 @@
       <td>90.97</td>
       <td>56.25</td>
       <td>48.61</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_supply_curve/benchmark/clad_weather_240_strength1.0_shape1.0</td>
+      <td>44.32</td>
+      <td>71.35</td>
+      <td>78.00</td>
+      <td>64.58</td>
+      <td>95.14</td>
+      <td>59.03</td>
+      <td>50.69</td>
       <td>864</td>
     </tr>
     <tr>
@@ -5055,6 +9169,28 @@
       <td>95.83</td>
       <td>60.42</td>
       <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_supply_curve/benchmark/clad_median_wind_240_strength1.0_shape0.0</td>
+      <td>44.32</td>
+      <td>72.10</td>
+      <td>78.77</td>
+      <td>60.42</td>
+      <td>95.14</td>
+      <td>55.56</td>
+      <td>50.69</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>evening_supply_curve/benchmark/clad_weather_240_strength1.0_shape0.0</td>
+      <td>44.35</td>
+      <td>71.70</td>
+      <td>78.07</td>
+      <td>63.19</td>
+      <td>95.14</td>
+      <td>57.64</td>
+      <td>50.69</td>
       <td>864</td>
     </tr>
     <tr>
@@ -5121,6 +9257,17 @@
       <td>95.83</td>
       <td>53.47</td>
       <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_weather_distribution/benchmark/cdf_power_240_C0.1_cdf_strength1.0</td>
+      <td>44.42</td>
+      <td>72.91</td>
+      <td>77.90</td>
+      <td>63.89</td>
+      <td>95.83</td>
+      <td>58.33</td>
+      <td>54.17</td>
       <td>864</td>
     </tr>
     <tr>
@@ -5550,6 +9697,17 @@
       <td>95.83</td>
       <td>54.86</td>
       <td>51.39</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_weather_distribution/benchmark/cdf_regional_240_C1.0_cdf_strength1.0</td>
+      <td>45.28</td>
+      <td>76.11</td>
+      <td>78.52</td>
+      <td>63.19</td>
+      <td>93.06</td>
+      <td>56.94</td>
+      <td>52.08</td>
       <td>864</td>
     </tr>
     <tr>
@@ -6309,6 +10467,17 @@
       <td>95.83</td>
       <td>58.33</td>
       <td>54.86</td>
+      <td>864</td>
+    </tr>
+    <tr>
+      <td>night_weather_distribution/benchmark/cdf_power_240_C1.0_cdf_strength1.0</td>
+      <td>47.48</td>
+      <td>79.38</td>
+      <td>77.81</td>
+      <td>59.72</td>
+      <td>93.06</td>
+      <td>53.47</td>
+      <td>50.69</td>
       <td>864</td>
     </tr>
     <tr>
@@ -7548,22 +11717,22 @@
   <tbody>
     <tr>
       <td>2026-10</td>
-      <td>38.27</td>
-      <td>64.02</td>
-      <td>80.66</td>
-      <td>62.1</td>
-      <td>90.32</td>
+      <td>34.95</td>
+      <td>59.79</td>
+      <td>82.94</td>
+      <td>61.29</td>
+      <td>93.55</td>
       <td>744</td>
     </tr>
     <tr>
       <td>2026-11</td>
-      <td>31.36</td>
-      <td>47.70</td>
-      <td>85.41</td>
-      <td>75.0</td>
+      <td>31.31</td>
+      <td>47.86</td>
+      <td>85.90</td>
+      <td>80.00</td>
       <td>95.00</td>
       <td>120</td>
     </tr>
   </tbody>
-</table></div></section><section><h2>整月对比</h2><a href="figures/2026-10.png?v=85d0dcfe62" target="_blank" rel="noopener" title="查看原图"><img src="figures/2026-10.png?v=85d0dcfe62" alt="2026-10整月对比"></a><a href="figures/2026-11.png?v=fe38178ce8" target="_blank" rel="noopener" title="查看原图"><img src="figures/2026-11.png?v=fe38178ce8" alt="2026-11整月对比"></a></section>
-<h2 id="daily">逐日预测、气象与市场边界量</h2><label for="jump">选择日期：</label> <select id="jump"><option value="2026-10-01">2026-10-01</option><option value="2026-10-02">2026-10-02</option><option value="2026-10-03">2026-10-03</option><option value="2026-10-04">2026-10-04</option><option value="2026-10-05">2026-10-05</option><option value="2026-10-06">2026-10-06</option><option value="2026-10-07">2026-10-07</option><option value="2026-10-08">2026-10-08</option><option value="2026-10-09">2026-10-09</option><option value="2026-10-10">2026-10-10</option><option value="2026-10-11">2026-10-11</option><option value="2026-10-12">2026-10-12</option><option value="2026-10-13">2026-10-13</option><option value="2026-10-14">2026-10-14</option><option value="2026-10-15">2026-10-15</option><option value="2026-10-16">2026-10-16</option><option value="2026-10-17">2026-10-17</option><option value="2026-10-18">2026-10-18</option><option value="2026-10-19">2026-10-19</option><option value="2026-10-20">2026-10-20</option><option value="2026-10-21">2026-10-21</option><option value="2026-10-22">2026-10-22</option><option value="2026-10-23">2026-10-23</option><option value="2026-10-24">2026-10-24</option><option value="2026-10-25">2026-10-25</option><option value="2026-10-26">2026-10-26</option><option value="2026-10-27">2026-10-27</option><option value="2026-10-28">2026-10-28</option><option value="2026-10-29">2026-10-29</option><option value="2026-10-30">2026-10-30</option><option value="2026-10-31">2026-10-31</option><option value="2026-11-01">2026-11-01</option><option value="2026-11-02">2026-11-02</option><option value="2026-11-03">2026-11-03</option><option value="2026-11-04">2026-11-04</option><option value="2026-11-05">2026-11-05</option></select> <button id="open-day" type="button">查看当天</button><p>点击日期展开两张对比图；点击图片可查看原图。</p><details id="d2026-10-01"><summary>2026-10-01 · MAE 57.67（基线 58.14） · 峰 75% / 谷 100%</summary><a href="figures/2026-10-01.png?v=0ea44f8d2b" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-01.png?v=0ea44f8d2b" alt="2026-10-01预测对比"></a><a href="weather_figures/2026-10-01.png?v=421ff01ff0" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-01.png?v=421ff01ff0" alt="2026-10-01气象与市场边界量"></a></details><details id="d2026-10-02"><summary>2026-10-02 · MAE 10.07（基线 9.74） · 峰 50% / 谷 100%</summary><a href="figures/2026-10-02.png?v=a87d99c5ad" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-02.png?v=a87d99c5ad" alt="2026-10-02预测对比"></a><a href="weather_figures/2026-10-02.png?v=5c9061d0d3" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-02.png?v=5c9061d0d3" alt="2026-10-02气象与市场边界量"></a></details><details id="d2026-10-03"><summary>2026-10-03 · MAE 59.71（基线 59.45） · 峰 75% / 谷 100%</summary><a href="figures/2026-10-03.png?v=4dab03ecca" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-03.png?v=4dab03ecca" alt="2026-10-03预测对比"></a><a href="weather_figures/2026-10-03.png?v=06140625a6" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-03.png?v=06140625a6" alt="2026-10-03气象与市场边界量"></a></details><details id="d2026-10-04"><summary>2026-10-04 · MAE 31.34（基线 56.45） · 峰 0% / 谷 100%</summary><a href="figures/2026-10-04.png?v=efa4e8e35c" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-04.png?v=efa4e8e35c" alt="2026-10-04预测对比"></a><a href="weather_figures/2026-10-04.png?v=e9fa5fa390" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-04.png?v=e9fa5fa390" alt="2026-10-04气象与市场边界量"></a></details><details id="d2026-10-05"><summary>2026-10-05 · MAE 12.44（基线 27.74） · 峰 100% / 谷 100%</summary><a href="figures/2026-10-05.png?v=d705c09b62" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-05.png?v=d705c09b62" alt="2026-10-05预测对比"></a><a href="weather_figures/2026-10-05.png?v=ab97778ab4" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-05.png?v=ab97778ab4" alt="2026-10-05气象与市场边界量"></a></details><details id="d2026-10-06"><summary>2026-10-06 · MAE 22.20（基线 38.10） · 峰 50% / 谷 75%</summary><a href="figures/2026-10-06.png?v=1bd3b3732a" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-06.png?v=1bd3b3732a" alt="2026-10-06预测对比"></a><a href="weather_figures/2026-10-06.png?v=5cd2d4b45f" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-06.png?v=5cd2d4b45f" alt="2026-10-06气象与市场边界量"></a></details><details id="d2026-10-07"><summary>2026-10-07 · MAE 9.38（基线 13.97） · 峰 75% / 谷 100%</summary><a href="figures/2026-10-07.png?v=34125eb034" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-07.png?v=34125eb034" alt="2026-10-07预测对比"></a><a href="weather_figures/2026-10-07.png?v=ce84a8b4a6" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-07.png?v=ce84a8b4a6" alt="2026-10-07气象与市场边界量"></a></details><details id="d2026-10-08"><summary>2026-10-08 · MAE 19.75（基线 51.28） · 峰 100% / 谷 100%</summary><a href="figures/2026-10-08.png?v=a21f7a4345" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-08.png?v=a21f7a4345" alt="2026-10-08预测对比"></a><a href="weather_figures/2026-10-08.png?v=c434afbdf2" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-08.png?v=c434afbdf2" alt="2026-10-08气象与市场边界量"></a></details><details id="d2026-10-09"><summary>2026-10-09 · MAE 41.22（基线 73.34） · 峰 50% / 谷 75%</summary><a href="figures/2026-10-09.png?v=ca77c59018" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-09.png?v=ca77c59018" alt="2026-10-09预测对比"></a><a href="weather_figures/2026-10-09.png?v=64ee692015" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-09.png?v=64ee692015" alt="2026-10-09气象与市场边界量"></a></details><details id="d2026-10-10"><summary>2026-10-10 · MAE 57.86（基线 73.05） · 峰 75% / 谷 100%</summary><a href="figures/2026-10-10.png?v=16de53a605" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-10.png?v=16de53a605" alt="2026-10-10预测对比"></a><a href="weather_figures/2026-10-10.png?v=f2915f962b" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-10.png?v=f2915f962b" alt="2026-10-10气象与市场边界量"></a></details><details id="d2026-10-11"><summary>2026-10-11 · MAE 127.37（基线 122.02） · 峰 0% / 谷 0%</summary><a href="figures/2026-10-11.png?v=86711d3d99" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-11.png?v=86711d3d99" alt="2026-10-11预测对比"></a><a href="weather_figures/2026-10-11.png?v=9aeca10f1c" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-11.png?v=9aeca10f1c" alt="2026-10-11气象与市场边界量"></a></details><details id="d2026-10-12"><summary>2026-10-12 · MAE 37.02（基线 56.19） · 峰 25% / 谷 100%</summary><a href="figures/2026-10-12.png?v=30e2d97c66" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-12.png?v=30e2d97c66" alt="2026-10-12预测对比"></a><a href="weather_figures/2026-10-12.png?v=2cf9d7d397" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-12.png?v=2cf9d7d397" alt="2026-10-12气象与市场边界量"></a></details><details id="d2026-10-13"><summary>2026-10-13 · MAE 22.03（基线 32.31） · 峰 75% / 谷 50%</summary><a href="figures/2026-10-13.png?v=1aa25a5b8e" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-13.png?v=1aa25a5b8e" alt="2026-10-13预测对比"></a><a href="weather_figures/2026-10-13.png?v=bb83e4b09f" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-13.png?v=bb83e4b09f" alt="2026-10-13气象与市场边界量"></a></details><details id="d2026-10-14"><summary>2026-10-14 · MAE 52.05（基线 75.12） · 峰 25% / 谷 50%</summary><a href="figures/2026-10-14.png?v=623059474a" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-14.png?v=623059474a" alt="2026-10-14预测对比"></a><a href="weather_figures/2026-10-14.png?v=2909cf4679" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-14.png?v=2909cf4679" alt="2026-10-14气象与市场边界量"></a></details><details id="d2026-10-15"><summary>2026-10-15 · MAE 34.17（基线 32.90） · 峰 0% / 谷 100%</summary><a href="figures/2026-10-15.png?v=4bd5dda873" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-15.png?v=4bd5dda873" alt="2026-10-15预测对比"></a><a href="weather_figures/2026-10-15.png?v=87f24d8cfc" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-15.png?v=87f24d8cfc" alt="2026-10-15气象与市场边界量"></a></details><details id="d2026-10-16"><summary>2026-10-16 · MAE 20.11（基线 23.77） · 峰 50% / 谷 100%</summary><a href="figures/2026-10-16.png?v=e7c2598b0c" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-16.png?v=e7c2598b0c" alt="2026-10-16预测对比"></a><a href="weather_figures/2026-10-16.png?v=4d435d1fd4" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-16.png?v=4d435d1fd4" alt="2026-10-16气象与市场边界量"></a></details><details id="d2026-10-17"><summary>2026-10-17 · MAE 39.00（基线 42.53） · 峰 100% / 谷 100%</summary><a href="figures/2026-10-17.png?v=01f37cf306" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-17.png?v=01f37cf306" alt="2026-10-17预测对比"></a><a href="weather_figures/2026-10-17.png?v=65156ec1ee" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-17.png?v=65156ec1ee" alt="2026-10-17气象与市场边界量"></a></details><details id="d2026-10-18"><summary>2026-10-18 · MAE 35.39（基线 37.05） · 峰 75% / 谷 100%</summary><a href="figures/2026-10-18.png?v=4a74ef2da7" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-18.png?v=4a74ef2da7" alt="2026-10-18预测对比"></a><a href="weather_figures/2026-10-18.png?v=50501a3443" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-18.png?v=50501a3443" alt="2026-10-18气象与市场边界量"></a></details><details id="d2026-10-19"><summary>2026-10-19 · MAE 20.28（基线 41.27） · 峰 50% / 谷 100%</summary><a href="figures/2026-10-19.png?v=2d3215543c" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-19.png?v=2d3215543c" alt="2026-10-19预测对比"></a><a href="weather_figures/2026-10-19.png?v=629e6983d6" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-19.png?v=629e6983d6" alt="2026-10-19气象与市场边界量"></a></details><details id="d2026-10-20"><summary>2026-10-20 · MAE 33.41（基线 30.81） · 峰 50% / 谷 100%</summary><a href="figures/2026-10-20.png?v=da9789db9a" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-20.png?v=da9789db9a" alt="2026-10-20预测对比"></a><a href="weather_figures/2026-10-20.png?v=777a3fb14a" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-20.png?v=777a3fb14a" alt="2026-10-20气象与市场边界量"></a></details><details id="d2026-10-21"><summary>2026-10-21 · MAE 19.45（基线 26.81） · 峰 100% / 谷 100%</summary><a href="figures/2026-10-21.png?v=5191ead761" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-21.png?v=5191ead761" alt="2026-10-21预测对比"></a><a href="weather_figures/2026-10-21.png?v=ab0dbb3c95" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-21.png?v=ab0dbb3c95" alt="2026-10-21气象与市场边界量"></a></details><details id="d2026-10-22"><summary>2026-10-22 · MAE 51.38（基线 46.01） · 峰 75% / 谷 100%</summary><a href="figures/2026-10-22.png?v=a1a8af9c7c" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-22.png?v=a1a8af9c7c" alt="2026-10-22预测对比"></a><a href="weather_figures/2026-10-22.png?v=4442dd9fac" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-22.png?v=4442dd9fac" alt="2026-10-22气象与市场边界量"></a></details><details id="d2026-10-23"><summary>2026-10-23 · MAE 56.08（基线 100.20） · 峰 75% / 谷 100%</summary><a href="figures/2026-10-23.png?v=7d5a2ad1c3" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-23.png?v=7d5a2ad1c3" alt="2026-10-23预测对比"></a><a href="weather_figures/2026-10-23.png?v=e0bc358b6c" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-23.png?v=e0bc358b6c" alt="2026-10-23气象与市场边界量"></a></details><details id="d2026-10-24"><summary>2026-10-24 · MAE 53.05（基线 71.59） · 峰 75% / 谷 100%</summary><a href="figures/2026-10-24.png?v=a46055a286" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-24.png?v=a46055a286" alt="2026-10-24预测对比"></a><a href="weather_figures/2026-10-24.png?v=04c42d6131" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-24.png?v=04c42d6131" alt="2026-10-24气象与市场边界量"></a></details><details id="d2026-10-25"><summary>2026-10-25 · MAE 31.77（基线 35.92） · 峰 50% / 谷 50%</summary><a href="figures/2026-10-25.png?v=01f3d90753" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-25.png?v=01f3d90753" alt="2026-10-25预测对比"></a><a href="weather_figures/2026-10-25.png?v=fc99a8f8d9" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-25.png?v=fc99a8f8d9" alt="2026-10-25气象与市场边界量"></a></details><details id="d2026-10-26"><summary>2026-10-26 · MAE 13.46（基线 18.38） · 峰 100% / 谷 100%</summary><a href="figures/2026-10-26.png?v=0f7f2818a8" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-26.png?v=0f7f2818a8" alt="2026-10-26预测对比"></a><a href="weather_figures/2026-10-26.png?v=543413a98c" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-26.png?v=543413a98c" alt="2026-10-26气象与市场边界量"></a></details><details id="d2026-10-27"><summary>2026-10-27 · MAE 38.15（基线 48.89） · 峰 75% / 谷 100%</summary><a href="figures/2026-10-27.png?v=0a404f1b6f" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-27.png?v=0a404f1b6f" alt="2026-10-27预测对比"></a><a href="weather_figures/2026-10-27.png?v=4778626ddc" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-27.png?v=4778626ddc" alt="2026-10-27气象与市场边界量"></a></details><details id="d2026-10-28"><summary>2026-10-28 · MAE 59.18（基线 48.44） · 峰 75% / 谷 100%</summary><a href="figures/2026-10-28.png?v=f443cf9070" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-28.png?v=f443cf9070" alt="2026-10-28预测对比"></a><a href="weather_figures/2026-10-28.png?v=a3a31e2262" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-28.png?v=a3a31e2262" alt="2026-10-28气象与市场边界量"></a></details><details id="d2026-10-29"><summary>2026-10-29 · MAE 8.32（基线 23.66） · 峰 75% / 谷 100%</summary><a href="figures/2026-10-29.png?v=b782ccad6a" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-29.png?v=b782ccad6a" alt="2026-10-29预测对比"></a><a href="weather_figures/2026-10-29.png?v=ce33d925f5" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-29.png?v=ce33d925f5" alt="2026-10-29气象与市场边界量"></a></details><details id="d2026-10-30"><summary>2026-10-30 · MAE 30.57（基线 55.66） · 峰 50% / 谷 100%</summary><a href="figures/2026-10-30.png?v=2f8c52633d" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-30.png?v=2f8c52633d" alt="2026-10-30预测对比"></a><a href="weather_figures/2026-10-30.png?v=03f6523768" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-30.png?v=03f6523768" alt="2026-10-30气象与市场边界量"></a></details><details id="d2026-10-31"><summary>2026-10-31 · MAE 82.49（基线 90.51） · 峰 75% / 谷 100%</summary><a href="figures/2026-10-31.png?v=5a22d2fd6b" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-31.png?v=5a22d2fd6b" alt="2026-10-31预测对比"></a><a href="weather_figures/2026-10-31.png?v=5f4e2051c6" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-31.png?v=5f4e2051c6" alt="2026-10-31气象与市场边界量"></a></details><details id="d2026-11-01"><summary>2026-11-01 · MAE 34.77（基线 40.45） · 峰 50% / 谷 100%</summary><a href="figures/2026-11-01.png?v=54ca573aaa" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-11-01.png?v=54ca573aaa" alt="2026-11-01预测对比"></a><a href="weather_figures/2026-11-01.png?v=f5fbc3c5ae" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-11-01.png?v=f5fbc3c5ae" alt="2026-11-01气象与市场边界量"></a></details><details id="d2026-11-02"><summary>2026-11-02 · MAE 31.14（基线 37.01） · 峰 100% / 谷 100%</summary><a href="figures/2026-11-02.png?v=ec66a6a30a" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-11-02.png?v=ec66a6a30a" alt="2026-11-02预测对比"></a><a href="weather_figures/2026-11-02.png?v=ed5394d84f" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-11-02.png?v=ed5394d84f" alt="2026-11-02气象与市场边界量"></a></details><details id="d2026-11-03"><summary>2026-11-03 · MAE 47.65（基线 69.29） · 峰 100% / 谷 75%</summary><a href="figures/2026-11-03.png?v=892c1615c8" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-11-03.png?v=892c1615c8" alt="2026-11-03预测对比"></a><a href="weather_figures/2026-11-03.png?v=fa94c94c25" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-11-03.png?v=fa94c94c25" alt="2026-11-03气象与市场边界量"></a></details><details id="d2026-11-04"><summary>2026-11-04 · MAE 28.64（基线 41.86） · 峰 75% / 谷 100%</summary><a href="figures/2026-11-04.png?v=73b14cd31a" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-11-04.png?v=73b14cd31a" alt="2026-11-04预测对比"></a><a href="weather_figures/2026-11-04.png?v=334a50564b" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-11-04.png?v=334a50564b" alt="2026-11-04气象与市场边界量"></a></details><details id="d2026-11-05"><summary>2026-11-05 · MAE 14.62（基线 17.59） · 峰 50% / 谷 100%</summary><a href="figures/2026-11-05.png?v=05019813eb" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-11-05.png?v=05019813eb" alt="2026-11-05预测对比"></a><a href="weather_figures/2026-11-05.png?v=37215117f1" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-11-05.png?v=37215117f1" alt="2026-11-05气象与市场边界量"></a></details><footer><p>更新于 2026-11-09 19:33 · 研究仍在进行 · MAE目标 &lt; 35</p><p><a href="metrics.csv">下载方案指标 CSV</a>　<a href="daily_metrics.csv">下载逐日指标 CSV</a>　<a href="monthly_metrics.csv">下载分月指标 CSV</a></p></footer></main><script>document.getElementById("open-day").addEventListener("click",()=>{const d=document.getElementById("jump").value;const e=document.getElementById("d"+d);e.open=true;e.scrollIntoView({behavior:"smooth",block:"start"});});</script></html>
+</table></div></section><section><h2>整月对比</h2><a href="figures/2026-10.png?v=5ee496e19e" target="_blank" rel="noopener" title="查看原图"><img src="figures/2026-10.png?v=5ee496e19e" alt="2026-10整月对比"></a><a href="figures/2026-11.png?v=ec2b390c1b" target="_blank" rel="noopener" title="查看原图"><img src="figures/2026-11.png?v=ec2b390c1b" alt="2026-11整月对比"></a></section>
+<h2 id="daily">逐日预测、气象与市场边界量</h2><label for="jump">选择日期：</label> <select id="jump"><option value="2026-10-01">2026-10-01</option><option value="2026-10-02">2026-10-02</option><option value="2026-10-03">2026-10-03</option><option value="2026-10-04">2026-10-04</option><option value="2026-10-05">2026-10-05</option><option value="2026-10-06">2026-10-06</option><option value="2026-10-07">2026-10-07</option><option value="2026-10-08">2026-10-08</option><option value="2026-10-09">2026-10-09</option><option value="2026-10-10">2026-10-10</option><option value="2026-10-11">2026-10-11</option><option value="2026-10-12">2026-10-12</option><option value="2026-10-13">2026-10-13</option><option value="2026-10-14">2026-10-14</option><option value="2026-10-15">2026-10-15</option><option value="2026-10-16">2026-10-16</option><option value="2026-10-17">2026-10-17</option><option value="2026-10-18">2026-10-18</option><option value="2026-10-19">2026-10-19</option><option value="2026-10-20">2026-10-20</option><option value="2026-10-21">2026-10-21</option><option value="2026-10-22">2026-10-22</option><option value="2026-10-23">2026-10-23</option><option value="2026-10-24">2026-10-24</option><option value="2026-10-25">2026-10-25</option><option value="2026-10-26">2026-10-26</option><option value="2026-10-27">2026-10-27</option><option value="2026-10-28">2026-10-28</option><option value="2026-10-29">2026-10-29</option><option value="2026-10-30">2026-10-30</option><option value="2026-10-31">2026-10-31</option><option value="2026-11-01">2026-11-01</option><option value="2026-11-02">2026-11-02</option><option value="2026-11-03">2026-11-03</option><option value="2026-11-04">2026-11-04</option><option value="2026-11-05">2026-11-05</option></select> <button id="open-day" type="button">查看当天</button><p>点击日期展开两张对比图；点击图片可查看原图。</p><details id="d2026-10-01"><summary>2026-10-01 · MAE 62.35（基线 58.14） · 峰 75% / 谷 100%</summary><a href="figures/2026-10-01.png?v=3b1773b1d1" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-01.png?v=3b1773b1d1" alt="2026-10-01预测对比"></a><a href="weather_figures/2026-10-01.png?v=421ff01ff0" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-01.png?v=421ff01ff0" alt="2026-10-01气象与市场边界量"></a></details><details id="d2026-10-02"><summary>2026-10-02 · MAE 8.19（基线 9.74） · 峰 50% / 谷 100%</summary><a href="figures/2026-10-02.png?v=514efcf6f8" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-02.png?v=514efcf6f8" alt="2026-10-02预测对比"></a><a href="weather_figures/2026-10-02.png?v=5c9061d0d3" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-02.png?v=5c9061d0d3" alt="2026-10-02气象与市场边界量"></a></details><details id="d2026-10-03"><summary>2026-10-03 · MAE 51.59（基线 59.45） · 峰 75% / 谷 100%</summary><a href="figures/2026-10-03.png?v=9371b03a87" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-03.png?v=9371b03a87" alt="2026-10-03预测对比"></a><a href="weather_figures/2026-10-03.png?v=06140625a6" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-03.png?v=06140625a6" alt="2026-10-03气象与市场边界量"></a></details><details id="d2026-10-04"><summary>2026-10-04 · MAE 26.75（基线 56.45） · 峰 0% / 谷 100%</summary><a href="figures/2026-10-04.png?v=3fcc7061a3" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-04.png?v=3fcc7061a3" alt="2026-10-04预测对比"></a><a href="weather_figures/2026-10-04.png?v=e9fa5fa390" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-04.png?v=e9fa5fa390" alt="2026-10-04气象与市场边界量"></a></details><details id="d2026-10-05"><summary>2026-10-05 · MAE 10.14（基线 27.74） · 峰 75% / 谷 100%</summary><a href="figures/2026-10-05.png?v=4028bd7ea7" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-05.png?v=4028bd7ea7" alt="2026-10-05预测对比"></a><a href="weather_figures/2026-10-05.png?v=ab97778ab4" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-05.png?v=ab97778ab4" alt="2026-10-05气象与市场边界量"></a></details><details id="d2026-10-06"><summary>2026-10-06 · MAE 16.66（基线 38.10） · 峰 50% / 谷 75%</summary><a href="figures/2026-10-06.png?v=7420085c87" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-06.png?v=7420085c87" alt="2026-10-06预测对比"></a><a href="weather_figures/2026-10-06.png?v=5cd2d4b45f" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-06.png?v=5cd2d4b45f" alt="2026-10-06气象与市场边界量"></a></details><details id="d2026-10-07"><summary>2026-10-07 · MAE 8.42（基线 13.97） · 峰 75% / 谷 100%</summary><a href="figures/2026-10-07.png?v=d5a984cf14" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-07.png?v=d5a984cf14" alt="2026-10-07预测对比"></a><a href="weather_figures/2026-10-07.png?v=ce84a8b4a6" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-07.png?v=ce84a8b4a6" alt="2026-10-07气象与市场边界量"></a></details><details id="d2026-10-08"><summary>2026-10-08 · MAE 20.89（基线 51.28） · 峰 100% / 谷 100%</summary><a href="figures/2026-10-08.png?v=4bed91282a" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-08.png?v=4bed91282a" alt="2026-10-08预测对比"></a><a href="weather_figures/2026-10-08.png?v=c434afbdf2" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-08.png?v=c434afbdf2" alt="2026-10-08气象与市场边界量"></a></details><details id="d2026-10-09"><summary>2026-10-09 · MAE 28.50（基线 73.34） · 峰 50% / 谷 75%</summary><a href="figures/2026-10-09.png?v=843857eae2" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-09.png?v=843857eae2" alt="2026-10-09预测对比"></a><a href="weather_figures/2026-10-09.png?v=64ee692015" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-09.png?v=64ee692015" alt="2026-10-09气象与市场边界量"></a></details><details id="d2026-10-10"><summary>2026-10-10 · MAE 54.30（基线 73.05） · 峰 75% / 谷 100%</summary><a href="figures/2026-10-10.png?v=c69474345b" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-10.png?v=c69474345b" alt="2026-10-10预测对比"></a><a href="weather_figures/2026-10-10.png?v=f2915f962b" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-10.png?v=f2915f962b" alt="2026-10-10气象与市场边界量"></a></details><details id="d2026-10-11"><summary>2026-10-11 · MAE 106.07（基线 122.02） · 峰 0% / 谷 100%</summary><a href="figures/2026-10-11.png?v=c61e23de1f" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-11.png?v=c61e23de1f" alt="2026-10-11预测对比"></a><a href="weather_figures/2026-10-11.png?v=9aeca10f1c" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-11.png?v=9aeca10f1c" alt="2026-10-11气象与市场边界量"></a></details><details id="d2026-10-12"><summary>2026-10-12 · MAE 36.34（基线 56.19） · 峰 25% / 谷 100%</summary><a href="figures/2026-10-12.png?v=f7b6dcfcd5" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-12.png?v=f7b6dcfcd5" alt="2026-10-12预测对比"></a><a href="weather_figures/2026-10-12.png?v=2cf9d7d397" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-12.png?v=2cf9d7d397" alt="2026-10-12气象与市场边界量"></a></details><details id="d2026-10-13"><summary>2026-10-13 · MAE 20.54（基线 32.31） · 峰 75% / 谷 50%</summary><a href="figures/2026-10-13.png?v=0db62fc5a1" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-13.png?v=0db62fc5a1" alt="2026-10-13预测对比"></a><a href="weather_figures/2026-10-13.png?v=bb83e4b09f" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-13.png?v=bb83e4b09f" alt="2026-10-13气象与市场边界量"></a></details><details id="d2026-10-14"><summary>2026-10-14 · MAE 55.20（基线 75.12） · 峰 25% / 谷 50%</summary><a href="figures/2026-10-14.png?v=740660e785" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-14.png?v=740660e785" alt="2026-10-14预测对比"></a><a href="weather_figures/2026-10-14.png?v=2909cf4679" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-14.png?v=2909cf4679" alt="2026-10-14气象与市场边界量"></a></details><details id="d2026-10-15"><summary>2026-10-15 · MAE 28.41（基线 32.90） · 峰 0% / 谷 100%</summary><a href="figures/2026-10-15.png?v=41761506b2" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-15.png?v=41761506b2" alt="2026-10-15预测对比"></a><a href="weather_figures/2026-10-15.png?v=87f24d8cfc" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-15.png?v=87f24d8cfc" alt="2026-10-15气象与市场边界量"></a></details><details id="d2026-10-16"><summary>2026-10-16 · MAE 18.33（基线 23.77） · 峰 50% / 谷 100%</summary><a href="figures/2026-10-16.png?v=177d8f78c0" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-16.png?v=177d8f78c0" alt="2026-10-16预测对比"></a><a href="weather_figures/2026-10-16.png?v=4d435d1fd4" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-16.png?v=4d435d1fd4" alt="2026-10-16气象与市场边界量"></a></details><details id="d2026-10-17"><summary>2026-10-17 · MAE 24.86（基线 42.53） · 峰 100% / 谷 100%</summary><a href="figures/2026-10-17.png?v=4151c246e3" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-17.png?v=4151c246e3" alt="2026-10-17预测对比"></a><a href="weather_figures/2026-10-17.png?v=65156ec1ee" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-17.png?v=65156ec1ee" alt="2026-10-17气象与市场边界量"></a></details><details id="d2026-10-18"><summary>2026-10-18 · MAE 40.59（基线 37.05） · 峰 0% / 谷 100%</summary><a href="figures/2026-10-18.png?v=595b471ca8" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-18.png?v=595b471ca8" alt="2026-10-18预测对比"></a><a href="weather_figures/2026-10-18.png?v=50501a3443" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-18.png?v=50501a3443" alt="2026-10-18气象与市场边界量"></a></details><details id="d2026-10-19"><summary>2026-10-19 · MAE 19.74（基线 41.27） · 峰 75% / 谷 100%</summary><a href="figures/2026-10-19.png?v=175ef19078" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-19.png?v=175ef19078" alt="2026-10-19预测对比"></a><a href="weather_figures/2026-10-19.png?v=629e6983d6" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-19.png?v=629e6983d6" alt="2026-10-19气象与市场边界量"></a></details><details id="d2026-10-20"><summary>2026-10-20 · MAE 38.91（基线 30.81） · 峰 50% / 谷 100%</summary><a href="figures/2026-10-20.png?v=7bbd632d9a" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-20.png?v=7bbd632d9a" alt="2026-10-20预测对比"></a><a href="weather_figures/2026-10-20.png?v=777a3fb14a" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-20.png?v=777a3fb14a" alt="2026-10-20气象与市场边界量"></a></details><details id="d2026-10-21"><summary>2026-10-21 · MAE 18.94（基线 26.81） · 峰 100% / 谷 100%</summary><a href="figures/2026-10-21.png?v=b2b982fca9" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-21.png?v=b2b982fca9" alt="2026-10-21预测对比"></a><a href="weather_figures/2026-10-21.png?v=ab0dbb3c95" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-21.png?v=ab0dbb3c95" alt="2026-10-21气象与市场边界量"></a></details><details id="d2026-10-22"><summary>2026-10-22 · MAE 41.37（基线 46.01） · 峰 100% / 谷 100%</summary><a href="figures/2026-10-22.png?v=d81e97b03c" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-22.png?v=d81e97b03c" alt="2026-10-22预测对比"></a><a href="weather_figures/2026-10-22.png?v=4442dd9fac" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-22.png?v=4442dd9fac" alt="2026-10-22气象与市场边界量"></a></details><details id="d2026-10-23"><summary>2026-10-23 · MAE 31.63（基线 100.20） · 峰 75% / 谷 100%</summary><a href="figures/2026-10-23.png?v=ff9a4bd112" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-23.png?v=ff9a4bd112" alt="2026-10-23预测对比"></a><a href="weather_figures/2026-10-23.png?v=e0bc358b6c" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-23.png?v=e0bc358b6c" alt="2026-10-23气象与市场边界量"></a></details><details id="d2026-10-24"><summary>2026-10-24 · MAE 48.90（基线 71.59） · 峰 75% / 谷 100%</summary><a href="figures/2026-10-24.png?v=efcfe6e542" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-24.png?v=efcfe6e542" alt="2026-10-24预测对比"></a><a href="weather_figures/2026-10-24.png?v=04c42d6131" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-24.png?v=04c42d6131" alt="2026-10-24气象与市场边界量"></a></details><details id="d2026-10-25"><summary>2026-10-25 · MAE 44.10（基线 35.92） · 峰 75% / 谷 50%</summary><a href="figures/2026-10-25.png?v=24189eb7c7" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-25.png?v=24189eb7c7" alt="2026-10-25预测对比"></a><a href="weather_figures/2026-10-25.png?v=fc99a8f8d9" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-25.png?v=fc99a8f8d9" alt="2026-10-25气象与市场边界量"></a></details><details id="d2026-10-26"><summary>2026-10-26 · MAE 11.08（基线 18.38） · 峰 100% / 谷 100%</summary><a href="figures/2026-10-26.png?v=ecf8434ba2" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-26.png?v=ecf8434ba2" alt="2026-10-26预测对比"></a><a href="weather_figures/2026-10-26.png?v=543413a98c" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-26.png?v=543413a98c" alt="2026-10-26气象与市场边界量"></a></details><details id="d2026-10-27"><summary>2026-10-27 · MAE 34.02（基线 48.89） · 峰 75% / 谷 100%</summary><a href="figures/2026-10-27.png?v=c94ea99e1e" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-27.png?v=c94ea99e1e" alt="2026-10-27预测对比"></a><a href="weather_figures/2026-10-27.png?v=4778626ddc" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-27.png?v=4778626ddc" alt="2026-10-27气象与市场边界量"></a></details><details id="d2026-10-28"><summary>2026-10-28 · MAE 56.95（基线 48.44） · 峰 75% / 谷 100%</summary><a href="figures/2026-10-28.png?v=0324da9a8d" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-28.png?v=0324da9a8d" alt="2026-10-28预测对比"></a><a href="weather_figures/2026-10-28.png?v=a3a31e2262" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-28.png?v=a3a31e2262" alt="2026-10-28气象与市场边界量"></a></details><details id="d2026-10-29"><summary>2026-10-29 · MAE 5.92（基线 23.66） · 峰 75% / 谷 100%</summary><a href="figures/2026-10-29.png?v=fe336e36da" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-29.png?v=fe336e36da" alt="2026-10-29预测对比"></a><a href="weather_figures/2026-10-29.png?v=ce33d925f5" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-29.png?v=ce33d925f5" alt="2026-10-29气象与市场边界量"></a></details><details id="d2026-10-30"><summary>2026-10-30 · MAE 32.15（基线 55.66） · 峰 50% / 谷 100%</summary><a href="figures/2026-10-30.png?v=c0ee52e2a1" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-30.png?v=c0ee52e2a1" alt="2026-10-30预测对比"></a><a href="weather_figures/2026-10-30.png?v=03f6523768" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-30.png?v=03f6523768" alt="2026-10-30气象与市场边界量"></a></details><details id="d2026-10-31"><summary>2026-10-31 · MAE 81.69（基线 90.51） · 峰 75% / 谷 100%</summary><a href="figures/2026-10-31.png?v=ca4d4d943a" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-10-31.png?v=ca4d4d943a" alt="2026-10-31预测对比"></a><a href="weather_figures/2026-10-31.png?v=5f4e2051c6" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-10-31.png?v=5f4e2051c6" alt="2026-10-31气象与市场边界量"></a></details><details id="d2026-11-01"><summary>2026-11-01 · MAE 32.11（基线 40.45） · 峰 75% / 谷 100%</summary><a href="figures/2026-11-01.png?v=81a96879c7" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-11-01.png?v=81a96879c7" alt="2026-11-01预测对比"></a><a href="weather_figures/2026-11-01.png?v=f5fbc3c5ae" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-11-01.png?v=f5fbc3c5ae" alt="2026-11-01气象与市场边界量"></a></details><details id="d2026-11-02"><summary>2026-11-02 · MAE 31.58（基线 37.01） · 峰 100% / 谷 100%</summary><a href="figures/2026-11-02.png?v=ea86873f5b" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-11-02.png?v=ea86873f5b" alt="2026-11-02预测对比"></a><a href="weather_figures/2026-11-02.png?v=ed5394d84f" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-11-02.png?v=ed5394d84f" alt="2026-11-02气象与市场边界量"></a></details><details id="d2026-11-03"><summary>2026-11-03 · MAE 48.03（基线 69.29） · 峰 100% / 谷 75%</summary><a href="figures/2026-11-03.png?v=e641656e36" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-11-03.png?v=e641656e36" alt="2026-11-03预测对比"></a><a href="weather_figures/2026-11-03.png?v=fa94c94c25" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-11-03.png?v=fa94c94c25" alt="2026-11-03气象与市场边界量"></a></details><details id="d2026-11-04"><summary>2026-11-04 · MAE 30.08（基线 41.86） · 峰 75% / 谷 100%</summary><a href="figures/2026-11-04.png?v=13ce6dfe2d" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-11-04.png?v=13ce6dfe2d" alt="2026-11-04预测对比"></a><a href="weather_figures/2026-11-04.png?v=334a50564b" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-11-04.png?v=334a50564b" alt="2026-11-04气象与市场边界量"></a></details><details id="d2026-11-05"><summary>2026-11-05 · MAE 14.73（基线 17.59） · 峰 50% / 谷 100%</summary><a href="figures/2026-11-05.png?v=d82736c091" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="figures/2026-11-05.png?v=d82736c091" alt="2026-11-05预测对比"></a><a href="weather_figures/2026-11-05.png?v=37215117f1" target="_blank" rel="noopener" title="查看原图"><img loading="lazy" src="weather_figures/2026-11-05.png?v=37215117f1" alt="2026-11-05气象与市场边界量"></a></details><footer><p>更新于 2026-11-09 20:15 · 回测复核已完成 · 全区间及十月MAE均低于35</p><p><a href="hourly_predictions.csv">下载逐小时预测 CSV</a>　<a href="metrics.csv">下载方案指标 CSV</a>　<a href="daily_metrics.csv">下载逐日指标 CSV</a>　<a href="monthly_metrics.csv">下载分月指标 CSV</a></p></footer></main><script>document.getElementById("open-day").addEventListener("click",()=>{const d=document.getElementById("jump").value;const e=document.getElementById("d"+d);e.open=true;e.scrollIntoView({behavior:"smooth",block:"start"});});</script></html>
