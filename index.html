@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="description" content="宁夏日前电价 D+1 回测：2026年10月1日至11月5日，分月准确度、逐日电价对比、气象与市场边界量。">
+  <meta name="theme-color" content="#14283e">
+  <title>宁夏日前电价 D+1 回测报告</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header class="topbar"><a class="brand" href="#top"><span class="brand-mark">N</span> 宁夏电价回测</a><nav><a href="#overview">整体表现</a><a href="#daily">逐日对比</a><a href="#method">回测口径</a></nav><button class="share" id="share">复制网页链接 <span aria-hidden="true">↗</span></button></header>
+  <main id="top">
+    <section class="hero">
+      <div class="eyebrow"><span class="status-dot"></span> 日前统一结算点电价 · D+1</div>
+      <h1>看清预测表现，<br><span>从整月到每一天。</span></h1>
+      <p class="intro">宁夏日前电价滚动回测报告，覆盖 2026 年 10 月 1 日至 11 月 5 日。<br class="desktop">对照实际电价，查看准确度，以及每天的气象与市场边界量。</p>
+      <div class="hero-foot"><span>36 个交易日</span><span>864 个小时点</span><span>仅回测 D+1</span></div>
+    </section>
+    <section id="overview" class="section">
+      <div class="section-heading"><div><span class="section-num">01 / OVERVIEW</span><h2>整体表现</h2></div><div class="scope-tabs" role="group" aria-label="选择统计范围"><button data-scope="all" aria-pressed="true">全部日期</button><button data-scope="2026-10" aria-pressed="false">十月</button><button data-scope="2026-11" aria-pressed="false">十一月 1–5 日</button></div></div>
+      <p class="range-label" id="scope-range">正在加载报告…</p>
+      <div class="metrics" aria-live="polite">
+        <article class="metric primary"><div>交易员口径准确率</div><strong id="accuracy">—</strong><small>逐小时误差评分的平均值</small></article>
+        <article class="metric"><div>平均绝对误差 · MAE</div><strong id="mae">—</strong><small>元 / MWh</small></article>
+        <article class="metric"><div>均方根误差 · RMSE</div><strong id="rmse">—</strong><small>元 / MWh</small></article>
+        <article class="metric"><div>相对前日基线的 MAE 降幅</div><strong id="gain">—</strong><small id="baseline">前日同时段价格作为基线</small></article>
+      </div>
+      <p class="coverage"><span aria-hidden="true">ⓘ</span> 十一月仅纳入 1–5 日。11 月 6 日尚无实际日前价，未进入评价。</p>
+      <article class="chart-card"><div class="card-heading"><h3>预测与实际电价</h3><span>点击图片可放大</span></div><img id="overview-chart" class="zoomable" alt="区间预测与实际电价、每日准确率与MAE对比" data-zoom></article>
+      <details class="chart-card heatmap"><summary>查看逐小时误差热力图 <span>＋</span></summary><img id="heatmap-chart" class="zoomable" alt="逐小时绝对误差与日准确率" data-zoom></details>
+    </section>
+    <section id="daily" class="section">
+      <div class="section-heading"><div><span class="section-num">02 / DAILY DETAIL</span><h2>一天，一张完整对照。</h2></div><p class="section-note">选择日期，电价和边界条件同步切换。</p></div>
+      <div class="day-toolbar"><div class="date-controls"><button id="previous" aria-label="前一天">←</button><label for="date">查看日期</label><input id="date" type="date" min="2026-10-01" max="2026-11-05"><button id="next" aria-label="后一天">→</button></div><div class="daily-stat" aria-live="polite"><span>准确率 <b id="day-accuracy">—</b></span><span>MAE <b id="day-mae">—</b></span><span>RMSE <b id="day-rmse">—</b></span></div></div>
+      <article class="chart-card"><div class="card-heading"><h3><span id="day-title">—</span> · 日前电价对比</h3><span>电价及误差：元 / MWh</span></div><img id="day-price" class="zoomable" alt="所选日期的实际电价、D+1预测电价及逐时误差" data-zoom></article>
+      <article class="chart-card"><div class="card-heading"><h3>同日气象与市场边界量</h3><span>气象预报 · 市场预测</span></div><img id="day-inputs" class="zoomable" alt="所选日期的温度、风速、辐照、系统负荷、新能源及竞价空间" data-zoom></article>
+      <details class="table-card"><summary>浏览全部日期指标 <span>＋</span></summary><div class="table-scroll"><table><thead><tr><th>日期</th><th>准确率</th><th>MAE</th><th>RMSE</th><th>平均偏差</th><th>低价修正点数</th></tr></thead><tbody id="daily-table"></tbody></table></div><p class="table-note">点击日期即可切换图表。误差单位：元 / MWh；平均偏差为预测减实际。</p></details>
+    </section>
+    <section id="method" class="section method-section"><span class="section-num">03 / METHODOLOGY</span><h2>如何理解这份报告</h2><div class="method-grid"><article><h3>回测方式</h3><p>每天使用目标日前连续 90 个自然日训练 LightGBM，固定 800 棵树、21 个特征。目标日不参与训练或早停，只预测 D+1。</p><p>预测价低于 60 元/MWh 时取 40，其他值保留。时段按宁夏口径 01:00 至 24:00 展示。</p></article><article><h3>准确率含义</h3><p>小时准确率 = max(0, 1 − |实际价 − 预测价| / |实际价|) × 100%。它是连续误差评分，不是命中率。</p><p>实际价为 0 的点不计入准确率，仍计入 MAE、RMSE。月度和区间准确率均为有效小时的平均值。</p></article><article><h3>气象来源</h3><p>Open-Meteo Previous Runs 历史预报，lead=1。入模气象包括银川体感温度、五个点位的 200 米风速和吴忠短波辐照度。</p><p>香山、六盘山风速采用日内向后 3 小时均值。</p></article></div><div class="method-limit"><h3>评价边界</h3><p>市场边界量来自当前总表，缺少各次历史发布快照。气象按各有效时刻约提前 24 小时取值，没有固定 D 日 08:45 前可得的次日全天同一起报场次。因此，本结果属于当前数据版本下的滚动样本外评估，无法严格复原历史早盘信息集。</p></div></section>
+  </main>
+  <footer><span>宁夏日前电价 D+1 回测报告</span><span>数据范围 2026.10.01 — 2026.11.05</span><a href="#top">返回顶部 ↑</a></footer>
+  <dialog id="zoom-dialog" aria-label="放大查看图表"><button id="close-zoom" aria-label="关闭放大图">关闭 ×</button><img id="zoom-image" alt="放大图表"></dialog>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body></html>
