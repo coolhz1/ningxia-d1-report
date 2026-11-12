@@ -1,0 +1,11 @@
+{
+  "samples": 6,
+  "median_train_predict_seconds": 1.691612187481951,
+  "min_train_predict_seconds": 1.6712296250043437,
+  "max_train_predict_seconds": 1.7543372920481488,
+  "median_cached_inference_seconds": 0.06599031301448122,
+  "peak_instrumented_RSS_MiB": 435.921875,
+  "cpu_threads_per_forest": 2,
+  "network_included": false,
+  "historical_OOF_bootstrap_included": false
+}

@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="说明天气来源、时间口径、清洗聚合、相对基线的变化与处理增益。"><meta name="color-scheme" content="light"><title>气象与数据处理文档 · 宁夏D1算法工程文档</title>
+<link rel="stylesheet" href="assets/style.css"><script src="assets/app.js" defer></script></head><body>
+<a class="skip" href="#main">跳到正文</a><header class="topbar"><a class="brand" href="index.html">宁夏 D+1<span>算法工程文档</span></a><span class="version">NX-D1-Slim-1.0</span><button type="button" class="print" data-print>打印 / 保存 PDF</button></header>
+<div class="layout"><aside class="sidebar"><nav aria-label="文档章节"><a href="index.html">方案总览</a><a href="weather.html" aria-current="page">气象与数据处理</a><a href="model.html">算法实现</a><a href="backtest.html">回测与复核</a></nav><div class="toc"><p>本页目录</p><nav aria-label="本页目录"><a href="#source">来源与时间语义</a><a href="#points">点位与高度</a><a href="#baseline">相对基线的变化</a><a href="#transform">34维夜间输入</a><a href="#bias">滞后出力修正</a><a href="#evidence">消融与交叉实验</a><a href="#contract">数据契约</a></nav></div><p class="sidebar-note">编制 2026-11-12<br>定版参数 2026-11-10<br>交割时区 Asia/Shanghai</p></aside>
+<main id="main"><header class="article-header"><h1>气象与数据处理文档</h1><p class="lead">说明天气来源、时间口径、清洗聚合、相对基线的变化与处理增益。</p></header>
+<section id="source"><h2>气象数据来源与时间语义</h2>
+<p>基线天气和扩展NWP均取自Open-Meteo Previous Runs历史预报接口。本地基线缓存为长表，包含天气类型、点位、坐标、预报有效时刻与数值。扩展NWP按7个风区点位分别缓存，显式指定GFS Seamless、ECMWF IFS 0.25°、ICON Global三种模式。</p>
+<p><code>previous_day1</code>表示相对于每个有效时刻固定提前约24小时的预报偏移。一天内24个有效时刻对应的历史预报信息集随时刻变化，固定lead=1无法证明整天数据在D日08:45前同时可用。该时间定义与接口文档一致。<a href="https://open-meteo.com/en/docs/previous-runs-api" target="_blank" rel="noreferrer">Open-Meteo官方时间口径</a></p>
+<p>基线请求未显式指定气象模式，复现使用已冻结缓存。扩展请求显式指定三模式，时间为Asia/Shanghai，风速单位为m/s。有效时间对齐内部0至23时，展示时段为1至24，末时刻标签为01:00至24:00。</p>
+<div class="table-scroll" tabindex="0"><table><thead><tr><th>数据层</th><th>定版取用</th><th>原始变量与单位</th></tr></thead><tbody>
+<tr><td>原7列小时天气</td><td>银川体感温度、吴忠辐照、5点风速</td><td>apparent_temperature °C<br>shortwave_radiation W/m²<br>wind_speed_200m m/s</td></tr>
+<tr><td>三模式区域天气</td><td>7点100米风速与风向</td><td>wind_speed_100m m/s<br>wind_direction_100m °</td></tr>
+<tr><td>三模式银川温度</td><td>银川2米温度</td><td>temperature_2m °C</td></tr>
+</tbody></table></div>
+<p>扩展天气需要45条原始序列，由3模式×7点×2变量，再加3模式×银川2米温度构成。原研究归档还包含10米风速与云量。小时森林的原7列天气另行来自基线缓存。<a href="downloads/weather_manifest.json">冻结取数与文件指纹</a></p>
+</section>
+<section id="points"><h2>点位与高度层</h2>
+<div class="table-scroll" tabindex="0"><table><thead><tr><th scope="col">编号</th><th scope="col">点位</th><th scope="col">经度</th><th scope="col">纬度</th><th scope="col">用途</th></tr></thead><tbody><tr><td>p0</td><td>香山</td><td>105.0</td><td>37.33</td><td>100米风速风向</td></tr><tr><td>p1</td><td>麻黄山</td><td>107.33</td><td>37.17</td><td>100米风速风向</td></tr><tr><td>p2</td><td>六盘山</td><td>106.3</td><td>35.43</td><td>100米风速风向</td></tr><tr><td>p3</td><td>贺兰山</td><td>105.95</td><td>38.9</td><td>100米风速风向</td></tr><tr><td>p4</td><td>吴忠市</td><td>106.196</td><td>37.976</td><td>100米风速风向</td></tr><tr><td>p5</td><td>银川市</td><td>106.219</td><td>38.476</td><td>100米风速风向，2米温度</td></tr><tr><td>p6</td><td>石嘴山市</td><td>106.409</td><td>38.961</td><td>100米风速风向</td></tr></tbody></table></div>
+<p>原小时天气的200米风速使用香山、六盘山、吴忠、银川、石嘴山5点。扩展夜间分类加入麻黄山与贺兰山，利用7点间的天气差异。上述坐标为当前配置中的代表点，区域聚合采用等权平均。</p>
+</section>
+<section id="baseline"><h2>相对于原始基线的处理变化</h2>
+<div class="table-scroll" tabindex="0"><table><thead><tr><th>处理</th><th>原始基线</th><th>定版实现与目的</th></tr></thead><tbody>
+<tr><td>基础7列天气</td><td>银川体感温度、吴忠辐照、5点200米风速</td><td>输入44列小时森林，保持天气与供需的非线性关系</td></tr>
+<tr><td>山地风速平滑</td><td>香山、六盘山已有日内3小时后向均值</td><td>同样按日分组，日初使用已有1至3小时，抑制短时噪声并避免跨日混合</td></tr>
+<tr><td>多模式100米天气</td><td>21列基线输入使用原7列天气</td><td>夜间分类保留21列点位风速，条件价格使用3列区域风速，刻画模式与空间差异</td></tr>
+<tr><td>风向编码</td><td>原7列天气以风速为主</td><td>构建3模式×区域u/v共6列，连续表达角度周期性</td></tr>
+<tr><td>夜间时间聚合</td><td>小时天气输入单一小时模型</td><td>时段1至8聚合到每日，匹配夜间低价事件和中位价格标签</td></tr>
+<tr><td>缺测处理</td><td>天气读取冻结长表</td><td>NWP先将−9999还原NaN，聚合后校验有限值，避免哨兵数值污染均值</td></tr>
+<tr><td>滞后出力偏差</td><td>未使用该夜间修正链路</td><td>以T−3及更早的实测偏差修正夜间风电与竞价空间，缓解持续预测偏差</td></tr>
+</tbody></table></div>
+<p>7列天气及山地平滑属于基线已有处理。新增信息集中在夜间价格水平与低价概率模块。额外NWP经过日级聚合后进入专门的夜间模型，小时森林使用单独定义的44列特征。</p>
+</section>
+<section id="transform"><h2>清洗、方向编码与34维夜间输入</h2>
+<p>先按有效时间索引对齐，<code>−9999 → NaN</code>。求均值时跳过单个缺测项，因此部分模式或点位缺测时仍可能产生聚合值。若最终必需列仍为空或无穷值，模型入口报错。当前有限性检查需结合原始缓存覆盖数量理解。</p>
+<pre class="formula"><code>山地平滑 ṽ(T,h) = mean(v(T,j)), j=max(0,h−2)…h
+方向编码 u = v100 × sin(θ × π/180)
+方向编码 v = v100 × cos(θ × π/180)
+模式区域风速 = mean(7点100米风速)
+夜间特征 = mean(内部小时0…7，即展示时段1…8)</code></pre>
+<p>方向分量按代码中的正号约定生成，用作连续方向编码。每个模式先对7点做小时均值，再对夜间8小时做均值。点位风速分别对相同夜间窗口取均值。银川2米温度先逐模式夜间聚合，再对模式求均值。</p>
+<div class="table-scroll" tabindex="0"><table><thead><tr><th>分类特征组</th><th>维数</th><th>构造</th></tr></thead><tbody>
+<tr><td>核心供需与天气</td><td>6</td><td>修正竞价空间、修正风电、银川体感温度、3模式区域100米风速</td></tr>
+<tr><td>补充空气温度</td><td>1</td><td>3模式银川2米温度的夜间均值再平均</td></tr>
+<tr><td>区域点位细节</td><td>21</td><td>7点×3模式的100米风速，各自夜间均值</td></tr>
+<tr><td>方向分量</td><td>6</td><td>3模式×区域u/v，各自夜间均值</td></tr>
+<tr><td>合计</td><td>34</td><td>夜间低价分类器输入，条件分位数模型使用其中6维核心输入</td></tr>
+</tbody></table></div>
+<p class="source"><a href="downloads/feature_dictionary.csv">完整字段清单</a> · <a href="downloads/parameters.json">变量别名及参数</a></p>
+</section>
+<section id="bias"><h2>滞后出力偏差与夜间供需修正</h2>
+<p>在光伏预测绝对值小于10<sup>−9</sup>的小时，以“实时新能源总出力−日前风电预测”作为风电预测偏差代理，对这些小时按天取均值。该代理受新能源统计口径和数据修订影响。</p>
+<pre class="formula"><code>e(t) = mean(新能源总出力实时 − 风电预测 | |光伏预测| &lt; 1e−9)
+b(T) = clip(EWMA(e.shift(3), span=3), −2000, 2000) MW
+EWMA参数 adjust=True, ignore_na=True, min_periods=3
+初始不足3个有效偏差时 b(T)=0
+夜间 wind′ = mean(wind) + b(T)
+夜间 space′ = mean(space) − b(T)</code></pre>
+<p>正偏差表示实际新能源出力通常高于风电预测，模型相应增加夜间供给估计、减少竞价空间。修正只作用于夜间日级输入，小时森林和晚间模块使用各自原预测曲线。T−3滞后是当前实现的可用性假设，审计验证从T−2起改变实测值不会改变目标日预测。</p>
+<p class="source"><a href="downloads/parameters.json">generation_bias参数</a> · <a href="downloads/causality_audit.json">近期实测扰动审计</a></p>
+</section>
+<section id="evidence"><h2>处理增益的消融与交叉实验证据</h2>
+<aside class="callout"><strong>历史消融在旧复杂方案上完成</strong><p>基准MAE为34.4465，修改夜间输入并重拟合下游校准。以下结果描述该实验条件，最终双森林版本尚未逐项重跑天气消融。</p></aside>
+<div class="table-scroll" tabindex="0"><table><thead><tr><th scope="col">旧复杂骨架上的处理变体</th><th scope="col">全区间MAE</th><th scope="col">相对34.4465的增加</th></tr></thead><tbody><tr><td>去掉滞后出力偏差</td><td>36.710</td><td>+2.264</td></tr><tr><td>去掉区域细节</td><td>37.026</td><td>+2.579</td></tr><tr><td>去掉方向分量</td><td>35.546</td><td>+1.099</td></tr><tr><td>去掉新增NWP</td><td>40.224</td><td>+5.777</td></tr><tr><td>去掉温度</td><td>35.645</td><td>+1.199</td></tr><tr><td>夜间只保留供需</td><td>39.221</td><td>+4.774</td></tr></tbody></table></div>
+<p>把天气扩展至95列的交叉实验中，原参数单LightGBM的MAE由47.986下降至45.701，新参数单LightGBM由47.185升至50.424，五模型组合由45.256升至48.587。天气与学习器存在交互，增益取决于天气进入模型的方式。</p>
+<p>现有证据支持保留夜间任务分解、多模式空间与方向表示、持续风电偏差修正和历史价格校准。现有对照无法将最终12.63元/MWh的总改善唯一分摊到各模块。对定版是否继续简化的取舍，另有固定骨架的基础模型规模对照。</p>
+<p class="source"><a href="downloads/weather_ablation_research.csv">历史夜间天气消融</a> · <a href="downloads/weather_model_factorial.csv">天气与模型交叉实验</a> · <a href="index.html#choice">定版模型规模对照</a></p>
+</section>
+<section id="contract"><h2>数据契约与复现范围</h2>
+<p>每个目标日需24条有序、唯一的小时输入。历史小时网格应连续，市场曲线与天气按同一交割日、时段对齐。聚合使用目标日整条预测曲线，价格统计先滞后再映射回小时，实测出力遵守T−3截止。</p>
+<p>核心模型接收准备好的DataFrame。当前 <code>slim_d1_pipeline.build_bundle</code> 读取冻结的 <code>features.joblib</code> 与 <code>nwp/features.joblib</code>，再重新构造价格历史与出力偏差。44列小时特征的上游逻辑在 <code>d1_features_v2.build_features</code>，扩展NWP原始转换在 <code>optimize_d1_nwp.data</code>。复现本次结果需要对应缓存与历史市场表。</p>
+<p>取数记录应包含有效时间、模式、变量、坐标、单位、lead、获取时间和归档指纹。若评估固定业务时刻的历史能力，还需保存起报时间、当时可用时间及市场曲线发布版本。<a href="backtest.html#limits">时间可用性及结论边界</a></p>
+</section>
+
+<footer>依据定版实现、冻结预测明细与审计记录编写。价格单位元/MWh，边界功率单位MW。<a href="index.html#evidence">证据与下载</a></footer></main></div></body></html>

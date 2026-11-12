@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="按算法工程实现说明 NX-D1-Slim-1.0 的输入、计算、回测证据与适用范围。"><meta name="color-scheme" content="light"><title>宁夏日前电价预测 定版算法说明 · 宁夏D1算法工程文档</title>
+<link rel="stylesheet" href="assets/style.css"><script src="assets/app.js" defer></script></head><body>
+<a class="skip" href="#main">跳到正文</a><header class="topbar"><a class="brand" href="index.html">宁夏 D+1<span>算法工程文档</span></a><span class="version">NX-D1-Slim-1.0</span><button type="button" class="print" data-print>打印 / 保存 PDF</button></header>
+<div class="layout"><aside class="sidebar"><nav aria-label="文档章节"><a href="index.html" aria-current="page">方案总览</a><a href="weather.html">气象与数据处理</a><a href="model.html">算法实现</a><a href="backtest.html">回测与复核</a></nav><div class="toc"><p>本页目录</p><nav aria-label="本页目录"><a href="#scope">目标与定版结果</a><a href="#architecture">整体计算流程</a><a href="#choice">精简取舍</a><a href="#limits">适用范围</a><a href="#evidence">证据与下载</a></nav></div><p class="sidebar-note">编制 2026-11-12<br>定版参数 2026-11-10<br>交割时区 Asia/Shanghai</p></aside>
+<main id="main"><header class="article-header"><h1>宁夏日前电价预测<br>定版算法说明</h1><p class="lead">按算法工程实现说明 NX-D1-Slim-1.0 的输入、计算、回测证据与适用范围。</p></header>
+<div class="metrics">
+<div><span>全区间 MAE</span><strong>35.36</strong><small>基线 47.99 元/MWh</small></div>
+<div><span>平均小时准确率</span><strong>82.70<em>%</em></strong><small>基线 75.73%</small></div>
+<div><span>峰价4小时捕获</span><strong>64.58<em>%</em></strong><small>实际并列价视为等价命中</small></div>
+<div><span>谷价4小时捕获</span><strong>95.83<em>%</em></strong><small>严格谷时段重合率 54.86%</small></div>
+</div>
+<section id="scope"><h2>目标、输出与定版结论</h2>
+<p>任务是在发布日D预测交割日T=D+1的24个日前小时电价。输出包括最终价格、原始价格、并列排序分数，以及夜间低价概率、夜间价格水平和晚间价格水平。以用户接受的MAE低于36为精简目标，保留改善夜间价格水平和峰谷识别的模块。</p>
+<p>定版保留两组ExtraTrees、夜间两阶段模型、一个通用固定节点单调校准器，以及晚间二变量中位数回归。原始LightGBM基线使用90天逐日滚动全量训练、21列特征、800棵树、8叶、叶最少160样本，预测价低于60时映射为40。</p>
+<div class="table-scroll" tabindex="0"><table><thead><tr><th scope="col">方案</th><th scope="col">MAE</th><th scope="col">RMSE</th><th scope="col">准确率</th><th scope="col">峰捕获</th><th scope="col">谷捕获</th></tr></thead><tbody><tr><td>原单LGB基线</td><td>47.99</td><td>75.32</td><td>75.73%</td><td>56.94%</td><td>88.19%</td></tr><tr><td>旧复杂定版</td><td>34.45</td><td>58.28</td><td>83.35%</td><td>63.89%</td><td>93.75%</td></tr><tr class="selected"><td>最终精简方案</td><td>35.36</td><td>59.43</td><td>82.70%</td><td>64.58%</td><td>95.83%</td></tr></tbody></table></div>
+<p>相对于原始基线，定版MAE下降26.32%，准确率增加6.97个百分点。旧复杂方案的MAE为34.45，精简后增加0.91，峰谷捕获率分别增加0.69和2.08个百分点。</p>
+<p class="source">依据 <a href="downloads/model_comparison.csv">三版同区间对比</a> · <a href="downloads/parameters.json">定版参数</a></p>
+</section>
+<section id="architecture"><h2>从输入到24小时电价</h2>
+<div class="flow">
+<div><b>输入与对齐</b><span>市场预测曲线<br>历史日前价格<br>历史气象预报</span></div>
+<div><b>小时价格曲线</b><span>44列小时特征<br>60天短窗森林<br>180天长窗森林</span></div>
+<div><b>分时段价格水平</b><span>夜间低价概率与分位数<br>晚间供需中位数<br>历史OOF单调校准</span></div>
+<div><b>融合与输出</b><span>夜间水平叠加曲线形状<br>晚间75% / 25%融合<br>低价映射与排序分数</span></div>
+</div>
+<p>小时曲线承担日内形状。夜间模块用多模式天气和修正供需估计价格水平，晚间模块将供需关系转换为晚峰水平。短窗更贴近近期价格分布，长窗为日内排序提供补充信息。</p>
+<p>本方案包含两个森林基础预测器。夜间分类器、6个条件分位数回归和两个价格校准实例也属于运行链路，计算开销按完整链路统计。</p>
+</section>
+<section id="choice"><h2>精简取舍及增益证据</h2>
+<p>双森林相对单森林改善约0.12元/MWh，峰价捕获率由61.11%提高至64.58%。增加更多基础模型的MAE改善在0.13至0.30元/MWh之间，本次选择双森林以保留峰谷表现并减少运行依赖。</p>
+<div class="table-scroll" tabindex="0"><table><thead><tr><th scope="col">基础曲线配置</th><th scope="col">预测器数</th><th scope="col">全区间MAE</th><th scope="col">十月MAE</th><th scope="col">峰捕获</th><th scope="col">谷捕获</th></tr></thead><tbody><tr><td>单森林</td><td>1</td><td>35.474</td><td>35.997</td><td>61.11%</td><td>95.14%</td></tr><tr class="selected"><td>最终双森林</td><td>2</td><td>35.358</td><td>35.833</td><td>64.58%</td><td>95.83%</td></tr><tr><td>森林加LightGBM</td><td>2</td><td>35.230</td><td>35.741</td><td>63.19%</td><td>94.44%</td></tr><tr><td>三个基础模型</td><td>3</td><td>35.211</td><td>35.697</td><td>63.89%</td><td>94.44%</td></tr><tr><td>五个基础模型</td><td>5</td><td>35.057</td><td>35.549</td><td>62.50%</td><td>94.44%</td></tr></tbody></table></div>
+<p>该表固定夜间与晚间水平，比较基础曲线的规模。研究中已删除多LightGBM与CatBoost组合、共享CDF、额外分布先验、晚间复杂CLAD及其天气输入。后续三个方向的25组探索仍推荐当前定版。</p>
+<p class="source"><a href="downloads/model_size_tradeoff.csv">定版骨架规模对比</a> · <a href="downloads/three_direction_selection.json">三个方向探索结论</a> · <a href="weather.html#evidence">天气处理的具体证据</a></p>
+</section>
+<section id="limits"><h2>回测结论的适用范围</h2>
+<aside class="callout"><strong>当前结论来自重复使用的研究区间</strong><p>36天、864小时覆盖2026年10月1日至11月5日。十月MAE为35.83，十一月仅1日至5日，MAE为32.41。该区间反复用于模型与参数比较，结果包含方案选择影响。</p></aside>
+<p>所有拟合标签与校准记录早于目标日，未来价格扰动检查通过。市场边界和实测出力采用已有归档版本，缺少逐次历史发布时间。天气按有效时刻取固定提前约24小时的预报值，尚未还原D日08:45前可用的次日全天同一起报场次。</p>
+<p>MAE低于36的结论适用于本冻结研究数据。九月复用研究区间的定版MAE为43.61，说明不同月份的难度与价格机制会改变结果。<a href="backtest.html#limits">查看回测协议与结论边界</a></p>
+</section>
+<section id="evidence"><h2>证据文件与可下载数据</h2>
+<div class="downloads">
+<a href="downloads/parameters.json" download><b>完整定版参数</b><span>模型窗口、特征、融合与校准参数</span></a>
+<a href="downloads/feature_dictionary.csv" download><b>输入字段清单</b><span>44 / 34 / 6 / 5 / 2维输入集合</span></a>
+<a href="downloads/hourly_comparison.csv" download><b>两版逐小时对比</b><span>实际价、预测价、误差、准确率</span></a>
+<a href="downloads/final_daily_metrics.csv" download><b>定版逐日指标</b><span>MAE、准确率与两种峰谷指标</span></a>
+<a href="downloads/training_cutoffs.csv" download><b>训练截止日期</b><span>36天各模块训练与数据截止日</span></a>
+<a href="downloads/weather_manifest.json" download><b>气象取数清单</b><span>模式、变量、坐标与文件指纹</span></a>
+<a href="downloads/causality_audit.json" download><b>因果扰动审计</b><span>未来价格、OOF与近期实测扰动</span></a>
+<a href="downloads/performance.json" download><b>性能测量汇总</b><span>完整训练推理耗时与内存</span></a>
+<a href="downloads/fresh_reproduction.json" download><b>864点重拟合复核</b><span>全区间复现及数值差异</span></a>
+<a href="downloads/history_reproduction.json" download><b>历史OOF重建</b><span>250天夜间、278天晚间预测</span></a>
+</div>
+<p>文档核对的实现包括 <code>build_bundle</code>、<code>NightModel.fit/predict</code>、<code>MedianMap.fit/predict</code>、<code>fit_snapshot</code>、<code>SlimSnapshot.predict</code> 和 <code>d1_metrics.score</code>。上游44维特征来自 <code>d1_features_v2.build_features</code>。</p>
+<p class="source">核心实现 SHA-256<br><code class="hash">038033d3896726956051be0c2bbc23947e472a66b88bd5ebce6de6fc6c3a94af</code></p>
+</section>
+
+<footer>依据定版实现、冻结预测明细与审计记录编写。价格单位元/MWh，边界功率单位MW。<a href="index.html#evidence">证据与下载</a></footer></main></div></body></html>

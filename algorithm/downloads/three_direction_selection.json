@@ -1,0 +1,50 @@
+{
+  "recommended": "000",
+  "name": "当前精简定版",
+  "benchmark_metrics": {
+    "phase": "benchmark",
+    "MAE": 35.35804275400593,
+    "RMSE": 59.42940604548126,
+    "accuracy": 82.70446116371328,
+    "peak_top4": 64.58333333333334,
+    "valley_bottom4": 95.83333333333334,
+    "strict_peak_top4": 59.02777777777778,
+    "strict_valley_bottom4": 54.861111111111114,
+    "n": 864,
+    "night_MAE": 52.27236446523071,
+    "day_MAE": 17.12927303248702,
+    "evening_MAE": 39.46437901170194,
+    "2026-10_MAE": 35.833119288595995,
+    "2026-11_MAE": 32.412568239547525
+  },
+  "dev_metrics": {
+    "phase": "dev",
+    "MAE": 43.6143922780681,
+    "RMSE": 72.905329075381,
+    "accuracy": 82.40074617999643,
+    "peak_top4": 53.333333333333336,
+    "valley_bottom4": 84.16666666666667,
+    "strict_peak_top4": 46.666666666666664,
+    "strict_valley_bottom4": 52.5,
+    "n": 720,
+    "night_MAE": 74.13685814758209,
+    "day_MAE": 19.554751325565842,
+    "evening_MAE": 39.66539822326933,
+    "2026-10_MAE": null,
+    "2026-11_MAE": null
+  },
+  "screened_configurations": 25,
+  "adoption_criteria": "Overall and October MAE<36; at least1 yuan/MWh improvement; peak/valley fall at most1percentage point; development MAE no worse",
+  "criteria_origin": "Analyst choice to implement the user's preference for keeping only material gains from added complexity",
+  "confidence_gate_threshold_fixed": 0.8,
+  "data_limitations": [
+    "available-generation and maintenance histories were not supplied; B tests dispatch proxies",
+    "spatial weights are learned statistics, not installed capacities",
+    "weather run availability uses a6hour delay assumption",
+    "frozen backbone retains original input-vintage limitations",
+    "both September and October-November are reused research periods"
+  ],
+  "new_weather_runs_requested": 432,
+  "new_weather_runs_cached": 430,
+  "audit_passed": true
+}

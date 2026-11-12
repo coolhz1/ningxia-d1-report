@@ -1,0 +1,41 @@
+{
+  "all36_refit": true,
+  "all864_reproduced": true,
+  "max_raw_difference": 1.5063505998114124e-12,
+  "benchmark_refit_seconds": 62.28205304197036,
+  "median_day_training_seconds": 1.7157564999652095,
+  "metrics": {
+    "MAE": 35.35804275400593,
+    "RMSE": 59.42940604548126,
+    "accuracy": 82.70446116371328,
+    "peak_top4": 64.58333333333334,
+    "valley_bottom4": 95.83333333333334,
+    "strict_peak_top4": 59.02777777777778,
+    "strict_valley_bottom4": 54.861111111111114,
+    "n": 864
+  },
+  "monthly": [
+    {
+      "month": "2026-10",
+      "MAE": 35.833119288595995,
+      "RMSE": 60.651733403178106,
+      "accuracy": 82.19853034538993,
+      "peak_top4": 62.903225806451616,
+      "valley_bottom4": 95.16129032258065,
+      "strict_peak_top4": 59.67741935483871,
+      "strict_valley_bottom4": 53.2258064516129,
+      "n": 744
+    },
+    {
+      "month": "2026-11",
+      "MAE": 32.412568239547525,
+      "RMSE": 51.20378735202454,
+      "accuracy": 85.84123223731811,
+      "peak_top4": 75.0,
+      "valley_bottom4": 100.0,
+      "strict_peak_top4": 55.00000000000001,
+      "strict_valley_bottom4": 65.0,
+      "n": 120
+    }
+  ]
+}

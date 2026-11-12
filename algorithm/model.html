@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="从44维小时输入到分时段价格融合，给出模型定义、参数、拟合目标、接口与计算成本。"><meta name="color-scheme" content="light"><title>算法实现文档 · 宁夏D1算法工程文档</title>
+<link rel="stylesheet" href="assets/style.css"><script src="assets/app.js" defer></script></head><body>
+<a class="skip" href="#main">跳到正文</a><header class="topbar"><a class="brand" href="index.html">宁夏 D+1<span>算法工程文档</span></a><span class="version">NX-D1-Slim-1.0</span><button type="button" class="print" data-print>打印 / 保存 PDF</button></header>
+<div class="layout"><aside class="sidebar"><nav aria-label="文档章节"><a href="index.html">方案总览</a><a href="weather.html">气象与数据处理</a><a href="model.html" aria-current="page">算法实现</a><a href="backtest.html">回测与复核</a></nav><div class="toc"><p>本页目录</p><nav aria-label="本页目录"><a href="#contract">任务与输入契约</a><a href="#features">44维小时特征</a><a href="#forests">双森林曲线</a><a href="#night">夜间两阶段模型</a><a href="#calibration">OOF单调校准</a><a href="#evening">晚间水平与最终融合</a><a href="#interface">接口与失败条件</a><a href="#performance">性能与复现</a></nav></div><p class="sidebar-note">编制 2026-11-12<br>定版参数 2026-11-10<br>交割时区 Asia/Shanghai</p></aside>
+<main id="main"><header class="article-header"><h1>算法实现文档</h1><p class="lead">从44维小时输入到分时段价格融合，给出模型定义、参数、拟合目标、接口与计算成本。</p></header>
+<section id="contract"><h2>任务定义与输入契约</h2>
+<p>令T为交割日，D=T−1为发布日。小时模型使用内部小时h=0…23，展示时段s=h+1。夜间为时段1至8，日间为9至17，晚间为18至24。标签为各时段实际日前价格，单位元/MWh。</p>
+<div class="table-scroll" tabindex="0"><table><thead><tr><th>输入对象</th><th>维数</th><th>索引与用途</th></tr></thead><tbody>
+<tr><td>hourly</td><td>44列</td><td>连续小时索引，供两个森林训练与预测</td></tr>
+<tr><td>night</td><td>34列</td><td>交割日索引，低价分类使用34列，条件分位数使用6列</td></tr>
+<tr><td>context</td><td>5列</td><td>日级历史价格锚点，供夜间价格校准</td></tr>
+<tr><td>evening</td><td>2列</td><td>晚间竞价空间与风电预测均值</td></tr>
+<tr><td>night_oof / evening_oof</td><td>历史预测与标签</td><td>记录预测日、原始水平、实际中位数、训练截止日</td></tr>
+</tbody></table></div>
+<p>所有学习与校准使用日期早于T的数据。目标日的全天市场预测曲线可以用于当日统计，价格历史只从T−1及更早的日前价格构造。T日及未来实际价格由回测评分环节读取。</p>
+</section>
+<section id="features"><h2>44维小时特征与构造</h2>
+<p>特征由日历5列、原天气7列、市场及曲线形状24列、滞后价格8列组成。表中日均值、日极值和秩均在同一目标日的预测曲线上计算。<code>m_space_future_ramp1</code>在日末取0，<code>ramp1/ramp3</code>向前取连续历史曲线。</p>
+<pre class="formula"><code>net_demand = load + tie − nonmarket
+space = net_demand − renewable_total_forecast
+ratio_renew = renewable_total_forecast / max(load, 1)
+space_relative = (space − day_min) / (day_max − day_min + 1)</code></pre>
+<p>派生空间与新能源占比还需要新能源总出力预测。该原始列参与构造，44列输入中的<code>m_pv</code>和<code>m_wind</code>各自保留。日历<code>day_type</code>取工作日0、普通周末1、节假日2，法定调休由日历库处理。</p>
+<details open><summary>日历与周期 · 5列</summary><div class="table-scroll" tabindex="0"><table><thead><tr><th scope="col">字段</th><th scope="col">定义与单位</th></tr></thead><tbody><tr><td><code>hour</code></td><td>内部小时0至23，与展示时段1至24对应</td></tr><tr><td><code>dow</code></td><td>星期0至6，周一为0</td></tr><tr><td><code>day_type</code></td><td>工作日0、普通周末1、节假日2，含法定调休</td></tr><tr><td><code>hour_sin</code></td><td>sin(2π×hour/24)</td></tr><tr><td><code>hour_cos</code></td><td>cos(2π×hour/24)</td></tr></tbody></table></div></details><details open><summary>原7列天气 · 7列</summary><div class="table-scroll" tabindex="0"><table><thead><tr><th scope="col">字段</th><th scope="col">定义与单位</th></tr></thead><tbody><tr><td><code>wx_temp_3</code></td><td>银川体感温度 °C</td></tr><tr><td><code>wx_irradiance_0</code></td><td>吴忠短波辐照 W/m²</td></tr><tr><td><code>wx_wind_speed_0_smooth3</code></td><td>香山200米风速，日内3小时后向均值 m/s</td></tr><tr><td><code>wx_wind_speed_2_smooth3</code></td><td>六盘山200米风速，日内3小时后向均值 m/s</td></tr><tr><td><code>wx_wind_speed_4</code></td><td>吴忠200米风速 m/s</td></tr><tr><td><code>wx_wind_speed_5</code></td><td>银川200米风速 m/s</td></tr><tr><td><code>wx_wind_speed_6</code></td><td>石嘴山200米风速 m/s</td></tr></tbody></table></div></details><details open><summary>市场曲线与形状 · 24列</summary><div class="table-scroll" tabindex="0"><table><thead><tr><th scope="col">字段</th><th scope="col">定义与单位</th></tr></thead><tbody><tr><td><code>m_load</code></td><td>系统负荷预测 MW</td></tr><tr><td><code>m_tie</code></td><td>省间联络线输电曲线预测 MW，沿用源表符号</td></tr><tr><td><code>m_nonmarket</code></td><td>非市场机组出力预测 MW</td></tr><tr><td><code>m_pv</code></td><td>光伏总出力预测 MW</td></tr><tr><td><code>m_wind</code></td><td>风电总出力预测 MW</td></tr><tr><td><code>m_space</code></td><td>负荷+联络线−非市场出力−新能源总出力预测 MW</td></tr><tr><td><code>m_space_ramp1</code></td><td>竞价空间相对前1小时的差，跨日取连续曲线 MW</td></tr><tr><td><code>m_space_ramp3</code></td><td>竞价空间相对前3小时的差 MW</td></tr><tr><td><code>ratio_renew</code></td><td>新能源总出力预测/max(负荷预测,1)</td></tr><tr><td><code>m_space_day_mean</code></td><td>当日24小时竞价空间均值 MW</td></tr><tr><td><code>m_space_day_min</code></td><td>当日竞价空间最小值 MW</td></tr><tr><td><code>m_space_day_max</code></td><td>当日竞价空间最大值 MW</td></tr><tr><td><code>m_space_day_std</code></td><td>当日竞价空间样本标准差 MW</td></tr><tr><td><code>m_space_relative</code></td><td>(当前空间−日最小空间)/(日最大空间−日最小空间+1)</td></tr><tr><td><code>m_space_rank</code></td><td>当前空间在当日的百分位秩，并列取平均秩</td></tr><tr><td><code>m_space_future_ramp1</code></td><td>同一日下一小时空间−当前空间，日末取0 MW</td></tr><tr><td><code>m_space_change_d1</code></td><td>当前空间−前1天同时段空间 MW</td></tr><tr><td><code>m_space_change_d7</code></td><td>当前空间−前7天同时段空间 MW</td></tr><tr><td><code>m_load_day_mean</code></td><td>当日负荷预测均值 MW</td></tr><tr><td><code>m_load_day_mean_change1</code></td><td>当日负荷均值−前一日负荷均值 MW</td></tr><tr><td><code>m_wind_day_mean</code></td><td>当日风电预测均值 MW</td></tr><tr><td><code>m_pv_day_max</code></td><td>当日光伏预测最大值 MW</td></tr><tr><td><code>space_night_mean</code></td><td>内部小时0至7竞价空间均值 MW</td></tr><tr><td><code>space_midday_mean</code></td><td>内部小时10至15竞价空间均值 MW</td></tr></tbody></table></div></details><details open><summary>滞后价格 · 8列</summary><div class="table-scroll" tabindex="0"><table><thead><tr><th scope="col">字段</th><th scope="col">定义与单位</th></tr></thead><tbody><tr><td><code>p_lag1</code></td><td>前1天同时段日前价格 元/MWh</td></tr><tr><td><code>p_lag7</code></td><td>前7天同时段日前价格 元/MWh</td></tr><tr><td><code>p_lag2</code></td><td>前2天同时段日前价格 元/MWh</td></tr><tr><td><code>p_lag3</code></td><td>前3天同时段日前价格 元/MWh</td></tr><tr><td><code>p_samehour_median7</code></td><td>前1至7天同时段价格中位数，需7个值 元/MWh</td></tr><tr><td><code>p_prevday_mean</code></td><td>前一日全天日前价格均值 元/MWh</td></tr><tr><td><code>p_prevday_std</code></td><td>前一日全天价格样本标准差 元/MWh</td></tr><tr><td><code>p_prevday_low_frac</code></td><td>前一日价格≤60的小时占比</td></tr></tbody></table></div></details>
+<p>44列森林输入按固定顺序取值。价格的日级统计先 <code>shift(1)</code> 再映射回每小时，近7天同时段中位数需要7个历史值。森林直接使用数值输入，RobustScaler用于后续线性模型。</p>
+<p class="source"><a href="downloads/feature_dictionary.csv">全部输入集合的字段清单</a> · <a href="downloads/parameters.json">固定特征顺序</a></p>
+</section>
+<section id="forests"><h2>双ExtraTrees与叶样本加权中位数</h2>
+<div class="table-scroll" tabindex="0"><table><thead><tr><th>参数</th><th>短窗森林</th><th>长窗森林</th></tr></thead><tbody>
+<tr><td>训练窗口</td><td>T前60个完整日，1440小时</td><td>T前180个完整日，4320小时</td></tr>
+<tr><td>树数</td><td>240</td><td>240</td></tr>
+<tr><td>min_samples_leaf</td><td>1</td><td>3</td></tr>
+<tr><td>max_features</td><td>0.85</td><td>0.85</td></tr>
+<tr><td>随机种子 / n_jobs</td><td>42 / 2</td><td>42 / 2</td></tr>
+<tr><td>输出</td><td>叶样本加权中位数、森林均值</td><td>森林均值</td></tr>
+</tbody></table></div>
+<p>短窗森林训练后保存每个训练样本在每棵树的叶节点。对一个查询小时，收集同叶的历史价格，每棵树的同叶样本总权重归一为1。把240棵树的样本权重合并，取累计权重达到50%的首个价格，得到Q<sub>50,S</sub>。同一森林另用标准<code>predict</code>得到均值μ<sub>S</sub>。</p>
+<pre class="formula"><code>wᵢ(x) = (1/M) Σₘ 1[leafₘ(xᵢ)=leafₘ(x)] / Nₘ(x)
+Q50,S(x) = 首个累计权重≥0.5的历史价格
+Q̃50,S = 40, 若Q50,S&lt;60；否则为Q50,S
+B(h) = 0.8 Q̃50,S(h) + 0.2 μL(h)
+R(h) = 0.8 μS(h) + 0.2 μL(h)</code></pre>
+<p>B为基础小时价格，R为曲线形状与并列排序分数。中位数更贴合绝对误差目标，均值提供连续的日内形状。每次训练分别验证60与180天完整小时数、特征和标签有限性。</p>
+</section>
+<section id="night"><h2>夜间低价事件与条件价格分布</h2>
+<p>夜间标签Y<sub>N</sub>(T)取时段1至8的实际价格中位数。先判断该日夜间中位数是否≤60，再在Y<sub>N</sub>&gt;60的历史日上学习条件价格分位数，分别处理低价事件和正常价格水平。</p>
+<div class="table-scroll" tabindex="0"><table><thead><tr><th>子模型</th><th>实现</th><th>参数</th></tr></thead><tbody>
+<tr><td>低价概率p</td><td>34维 → RobustScaler → LogisticRegression</td><td>窗口最多240天，L2，C=1，lbfgs，max_iter=2000</td></tr>
+<tr><td>条件分位数</td><td>6维 → RobustScaler → 6个QuantileRegressor</td><td>α正则=0.001，价格除400，solver=highs</td></tr>
+<tr><td>分位数网格</td><td>0.05、0.10、0.20、0.30、0.40、0.50</td><td>训练标签仅用夜间中位数&gt;60的日期</td></tr>
+</tbody></table></div>
+<p>两个缩放器分别在本次历史窗口的分类与价格特征上拟合。若低价标签只有一种类别，概率使用平滑常数<code>(低价日数+1)/(历史日数+2)</code>。至少需要30个历史日及9个正常价格日，否则报错。</p>
+<pre class="formula"><code>若 p≥0.5，原始夜间水平 Lraw=40
+若 p&lt;0.5，α*=(0.5−p)/(1−p)
+各条件分位数预测先做累计最大值，消除分位数交叉
+Lraw = 在[0.05,…,0.50]网格上插值 Qpositive(α*)
+网格外取最近端点，Lraw裁剪到[40,1000]</code></pre>
+<p>α*来自“低价状态概率p+正常价格条件分布”的混合中位数。p越接近0.5，选择的正常价格分位点越低。低价状态采用40元/MWh水平，再由历史校准调整。该结构明确区分低价概率与非低价时的价格幅度。</p>
+</section>
+<section id="calibration"><h2>历史OOF与固定节点单调校准</h2>
+<p>OOF在这里指逐日向前滚动产生的历史预测。每个历史日s的预测仅由s之前的训练数据生成，记录<code>train_end&lt;s</code>。夜间校准取T前90个完整日，晚间校准取T前180个完整日。</p>
+<p>基础价格映射在9个固定价格节点上分段线性插值。节点依次为40、80、140、220、300、380、500、700、1000。优化目标是历史日级价格误差的L1损失，叠加对恒等映射和上下文系数的L1先验。</p>
+<pre class="formula"><code>ŷs / 400 = A(Lraw,s) β + g(Lraw,s) · z̃s γ
+g(L) = clip((L−60)/60, 0, 1)
+min mean(|Ys/400 − ŷs/400|)
+    + (0.02/9) Σk |βk − knotk/400| + 0.005 Σj |γj|
+约束 β1≤…≤β9，0.1≤βk≤2.5</code></pre>
+<p>A为相邻固定节点的线性插值权重。单调约束施加于9个基础节点，夜间再叠加门控的价格上下文，最终水平裁剪到40至1000。优化通过<code>scipy.optimize.linprog(method='highs')</code>求解。晚间映射使用相同节点与恒等先验，上下文维数为0。</p>
+<div class="table-scroll" tabindex="0"><table><thead><tr><th>夜间上下文</th><th>定义</th></tr></thead><tbody>
+<tr><td>known_high1</td><td>前一日全日价格&gt;60部分的中位数，无有效值时向前填充，再兜底100</td></tr>
+<tr><td>known_high7</td><td>先滞后一天，再取近7日上述日级中位数的中位数，min_periods=1</td></tr>
+<tr><td>known_evening_high1</td><td>前一日晚间价格&gt;60部分的中位数，缺失时用known_high1</td></tr>
+<tr><td>known_night_1</td><td>前一日夜间8小时价格中位数</td></tr>
+<tr><td>known_evening</td><td>前一日晚间7小时价格中位数</td></tr>
+</tbody></table></div>
+<p>上下文只用本次校准历史窗口拟合RobustScaler，使用同一变换处理T日。历史OOF会随每日新增样本更新，模型验证其训练截止日早于各预测日。</p>
+</section>
+<section id="evening"><h2>晚间供需水平与24小时融合</h2>
+<p>晚间标签是时段18至24实际价格的中位数。输入为相同7小时的竞价空间与风电预测均值，在T之前最多240天上拟合RobustScaler和中位数QuantileRegressor，<code>quantile=0.5</code>、<code>alpha=0</code>、价格除400，至少需要3个历史日。原始水平裁剪到40至1000，再经180天历史OOF固定节点映射得到L<sub>E</sub>。</p>
+<pre class="formula"><code>LN = 夜间90天校准后的价格水平
+LE = 晚间180天校准后的价格水平
+夜间时段1…8   raw(h) = LN + R(h) − median(R(夜间))
+日间时段9…17  raw(h) = B(h)
+晚间时段18…24 raw(h) = 0.75 B(h) + 0.25 LE
+最终价格 pred(h) = 40, 若raw(h)&lt;60；否则为raw(h)
+并列排序分数 rank_score(h) = R(h)</code></pre>
+<p>夜间叠加去中位数后的均值曲线，保持价格水平与日内形状的分工。晚间25%的日级水平减少小时曲线的系统偏移。40至1000的裁剪作用于夜间及晚间水平估计，最终小时融合后执行低价映射，原始小时曲线保留其数值范围。</p>
+<p>最终低价映射会产生多个40元/MWh并列小时。峰谷选择先按最终价格排序，再按R排序，最后按时段先后排序。排序分数与最终价格分别保存。</p>
+</section>
+<section id="interface"><h2>接口、输出及失败条件</h2>
+<pre><code># 由准备好的DataFrame与历史OOF训练目标日快照
+prediction, snapshot = train_predict(
+    target, bundle, night_oof, evening_oof
+)
+
+# 使用该目标日快照和目标特征再次推理
+prediction = snapshot.predict(
+    bundle['hourly'], bundle['night'],
+    bundle['context'], bundle['evening']
+)</code></pre>
+<p>核心入口位于<code>slim_d1_model.py</code>，<code>fit_snapshot</code>返回包含森林、叶样本、夜间模型、晚间模型及两套校准参数的快照。输出列为<code>date, period, raw, pred, rank_score, night_level, night_low_probability, evening_level, model_version</code>，回测环节再附<code>actual</code>。</p>
+<p>目标日应恰好24小时并按0至23时有序排列。60/180天森林历史不足、90/180天OOF校准日期不全、输入非有限值、夜间有效日不足、OOF训练截止异常或线性规划失败时，当前实现抛出异常。每个快照绑定一个目标日，后续交割日需要相应输入和重新拟合。</p>
+<p>数据适配层<code>slim_d1_pipeline.py</code>使用现有冻结特征缓存，核心模型本身接收DataFrame。快照记录两个森林、两个日级模型、两个校准器的训练截止，以及实测出力可用截止。</p>
+<p class="source"><a href="downloads/final_hourly_predictions.csv">定版全部输出</a> · <a href="downloads/training_cutoffs.csv">36天各模块截止日</a></p>
+</section>
+<section id="performance"><h2>整体计算成本与复现</h2>
+<div class="metrics compact"><div><span>训练并预测24小时</span><strong>1.692<em>s</em></strong><small>6次测量的中位数</small></div><div><span>已训练快照推理</span><strong>0.066<em>s</em></strong><small>每次输出完整24小时</small></div><div><span>进程峰值RSS</span><strong>436<em>MiB</em></strong><small>含数据与运行时的进程总内存</small></div></div>
+<p>测量在2026年10月1日、10月20日、11月5日分别重复两次，完整训练推理范围为1.671至1.754秒。每个样本再重复5次快照推理并取中位数。森林和线程池限制为2线程。当前记录为执行环境实测，内存采样和进程历史峰值取较大值。</p>
+<p>上述耗时包含两个森林、夜间两阶段模型、晚间模型、两次校准与24小时输出。测量前已准备数据与历史OOF，网络取数、特征缓存装载和首次历史OOF重建需另计。36天重新训练预测总耗时记录为62.28秒，其计时同样从历史OOF准备完毕后开始。</p>
+<p>核心依赖版本为numpy 2.4.6、pandas 2.2.3、scipy 1.18.1、scikit-learn 1.8.0、joblib 1.6.0、threadpoolctl 3.8.0。性能采样额外使用psutil。重新训练需要原仓库及本次冻结输入。</p>
+<pre><code>.venv/bin/python handover/training/ningxia_ahead/slim_d1_pipeline.py --part backtest
+.venv/bin/python handover/training/ningxia_ahead/slim_d1_pipeline.py --part audit
+.venv/bin/python handover/training/ningxia_ahead/slim_d1_pipeline.py --part profile</code></pre>
+<p class="source"><a href="downloads/performance.json">完整性能测量汇总</a> · <a href="downloads/fresh_reproduction.json">36天重拟合记录</a> · <a href="downloads/parameters.json">参数与依赖版本</a></p>
+</section>
+
+<footer>依据定版实现、冻结预测明细与审计记录编写。价格单位元/MWh，边界功率单位MW。<a href="index.html#evidence">证据与下载</a></footer></main></div></body></html>
