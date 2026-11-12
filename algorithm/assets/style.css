@@ -103,6 +103,35 @@ canvas{display:block;width:100%;height:280px;touch-action:pan-y}
 .day-link{border:0;padding:0;color:var(--teal);font-size:12px;background:transparent}
 footer{margin-top:65px;padding-top:22px;border-top:1px solid var(--line);color:#819099;font-size:11px}
 footer a{margin-left:8px}
+.resource-heading{margin-bottom:25px}
+.resource-heading label{display:block;font-size:12px;color:var(--muted);margin-bottom:7px}
+.resource-heading select{max-width:100%;min-width:300px;font-size:14px}
+.resource-filters{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin:25px 0}
+.resource-filters label{display:flex;flex-direction:column;gap:5px;font-size:11px;color:var(--muted)}
+.resource-filters input,.resource-filters select,.resource-filters button{font-size:12px;min-height:40px}
+.resource-filters input[type=search]{width:200px}
+.resource-filters button{font-size:12px;min-height:40px}
+.resource-pagination{display:flex;align-items:center;gap:15px;margin:20px 0;font-size:12px;color:var(--muted)}
+.resource-pagination button{font-size:12px}
+.resource-key{display:block;font-size:10px;font-weight:400;color:#78909b;overflow-wrap:anywhere;margin-top:3px}
+.resource-object{display:grid;grid-template-columns:minmax(150px,220px) minmax(0,1fr);margin:0;border-top:1px solid var(--line);font-size:13px}
+.resource-object>dt,.resource-object>dd{margin:0;padding:14px 12px;border-bottom:1px solid var(--line);min-width:0;overflow-wrap:anywhere}
+.resource-object>dt{background:#f5f8f7;color:#365364;font-weight:500}
+.resource-object>dd>.resource-object{grid-template-columns:minmax(115px,170px) minmax(0,1fr);font-size:12px}
+.resource-object .table-scroll{margin:0}
+.resource-list{margin:0;padding-left:20px;font-size:12px;overflow-wrap:anywhere}
+.resource-list li{padding:3px 0}
+.resource-value{white-space:pre-wrap;overflow-wrap:anywhere}
+.resource-table td{max-width:320px;min-width:90px;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.resource-table td:first-child{min-width:100px}
+.resource-table th{vertical-align:top;white-space:normal;min-width:105px}
+.resource-table td details{border:0;padding:0;margin:0;min-width:220px}
+.resource-table td details summary{font-size:12px;font-weight:400;color:var(--teal)}
+.resource-save{font-size:12px;margin-top:24px}
+#resourceStatus{font-size:12px;color:var(--muted)}
+#resourceStatus.error{color:#a24731}
+[hidden]{display:none!important}
+@media(max-width:800px){.resource-heading select{width:100%;min-width:0}.resource-object,.resource-object>dd>.resource-object{display:block}.resource-object>dt{padding:12px 10px 5px;border-bottom:0}.resource-object>dd{padding:7px 10px 14px}.resource-filters label{flex:1;min-width:125px}.resource-filters input[type=search]{width:100%}.resource-filters input{max-width:100%;width:100%}.resource-filters button{font-size:11px}.resource-object .table-scroll{max-width:100%}}
 @media(min-width:1500px){main{padding-right:80px}}
 @media(max-width:1200px){main{padding:42px 35px}.layout{grid-template-columns:205px minmax(0,1fr)}.sidebar{padding-left:15px}.topbar{padding:0 30px}.metrics strong{font-size:30px}.flow{grid-template-columns:repeat(2,1fr)}.metrics{gap:12px}}
 @media(max-width:800px){.topbar{height:64px;padding:0 18px;gap:12px}.brand{font-size:17px}.brand span{display:none}.version{font-size:10px}.print{font-size:10px;padding:5px 7px}.layout{display:block}.sidebar{position:static;height:auto;padding:12px 14px;border-right:0;border-bottom:1px solid var(--line)}.sidebar>nav{display:flex;gap:3px;flex-wrap:wrap}.sidebar nav a{font-size:12px;padding:7px 10px}.toc,.sidebar-note{display:none}main{padding:31px 24px}h1{font-size:31px}h2{font-size:21px}.lead{font-size:14px}.metrics{grid-template-columns:repeat(2,1fr);gap:15px}.metrics strong{font-size:32px}.metrics.compact{grid-template-columns:1fr}.metrics.compact>div{display:grid;grid-template-columns:1fr 1fr}.metrics.compact small{grid-column:1/3}.table-scroll table{min-width:600px}.table-scroll td{padding:11px 12px}.table-scroll th{padding:10px 12px}pre{font-size:11px;padding:16px}.downloads{grid-template-columns:1fr}.chart-header{align-items:flex-start}.legend{gap:10px}section+section{margin-top:36px}html{scroll-padding-top:80px}}

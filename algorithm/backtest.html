@@ -1,9 +1,9 @@
 <!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="在相同864小时上比较原始基线与定版，支持自定义日期、逐日电价及气象边界量阅读。"><meta name="color-scheme" content="light"><title>回测与复核文档 · 宁夏D1算法工程文档</title>
-<link rel="stylesheet" href="assets/style.css"><script src="assets/app.js" defer></script></head><body>
+<link rel="stylesheet" href="assets/style.css?v=2127a3fffd"><script src="assets/app.js?v=2728bcb90c" defer></script><script src="assets/resources.js?v=71de764c98" defer></script></head><body>
 <a class="skip" href="#main">跳到正文</a><header class="topbar"><a class="brand" href="index.html">宁夏 D+1<span>算法工程文档</span></a><span class="version">NX-D1-Slim-1.0</span><button type="button" class="print" data-print>打印 / 保存 PDF</button></header>
-<div class="layout"><aside class="sidebar"><nav aria-label="文档章节"><a href="index.html">方案总览</a><a href="weather.html">气象与数据处理</a><a href="model.html">算法实现</a><a href="backtest.html" aria-current="page">回测与复核</a></nav><div class="toc"><p>本页目录</p><nav aria-label="本页目录"><a href="#protocol">滚动回测协议</a><a href="#metrics">指标定义</a><a href="#explore">自定义区间核算</a><a href="#daily">逐日曲线与数据</a><a href="#audit">重拟合与因果审计</a><a href="#limits">结果适用边界</a></nav></div><p class="sidebar-note">编制 2026-11-12<br>定版参数 2026-11-10<br>交割时区 Asia/Shanghai</p></aside>
+<div class="layout"><aside class="sidebar"><nav aria-label="文档章节"><a href="index.html">方案总览</a><a href="weather.html">气象与数据处理</a><a href="model.html">算法实现</a><a href="backtest.html" aria-current="page">回测与复核</a><a href="resources.html">资料查阅</a></nav><div class="toc"><p>本页目录</p><nav aria-label="本页目录"><a href="#protocol">滚动回测协议</a><a href="#metrics">指标定义</a><a href="#explore">自定义区间核算</a><a href="#daily">逐日曲线与数据</a><a href="#audit">重拟合与因果审计</a><a href="#limits">结果适用边界</a></nav></div><p class="sidebar-note">编制 2026-11-12<br>定版参数 2026-11-10<br>交割时区 Asia/Shanghai</p></aside>
 <main id="main"><header class="article-header"><h1>回测与复核文档</h1><p class="lead">在相同864小时上比较原始基线与定版，支持自定义日期、逐日电价及气象边界量阅读。</p></header>
 <section id="protocol"><h2>逐日滚动回测协议</h2>
 <p>评估范围为2026年10月1日至11月5日，共36个交割日、864小时。每个目标日重新训练对应窗口的模型，训练与校准仅取目标日前的标签。原始基线与定版按交割日、时段关联，实际价逐条一致。</p>
@@ -16,7 +16,7 @@
 <tr><td>出力偏差代理</td><td>T−3及更早</td><td>光伏预测为0时的实测新能源出力偏差</td></tr>
 </tbody></table></div>
 <p>例如T为10月1日，两森林最后训练日均为9月30日，出力偏差最晚使用9月28日。目标日实际价在模型预测完成后附到明细，用于核算指标。十一月指标仅包含1日至5日。</p>
-<p class="source"><a href="downloads/training_cutoffs.csv">全部36天训练截止</a> · <a href="downloads/model_comparison.csv">三版同区间对比</a></p>
+<p class="source"><a href="resources.html?file=training_cutoffs.csv">全部36天训练截止</a> · <a href="resources.html?file=model_comparison.csv">三版同区间对比</a></p>
 </section>
 <section id="metrics"><h2>误差、准确率与两种峰谷指标</h2>
 <pre class="formula"><code>MAE = mean(|预测价 − 实际价|)
@@ -26,7 +26,7 @@ RMSE = sqrt(mean((预测价 − 实际价)²))
 <p>实际价为0的小时保留在MAE与RMSE中，准确率跳过该小时。准确率采用逐小时相对误差截断，区间内按小时等权平均，低价小时的相对误差会较大。网站和CSV保留相同口径。</p>
 <p><b>每日最高 / 最低各4小时主口径</b>先按最终预测价格选择4小时，预测价并列时按排序分数、时段先后确定顺序。预测选出的峰小时若实际价≥该日实际第4高价格则命中，谷小时若实际价≤实际第4低价格则命中，比较容差为10<sup>−9</sup>。每日至多4次命中，跨日对每日命中率等权平均。</p>
 <p><b>严格4小时时段重合率</b>把实际价格也按时段先后打破并列，明确选出4个实际时段，再与预测4时段求交集。实际低价平台较长时，两种指标差别会较大，因此共同展示。定版全区间主口径峰谷为64.58% / 95.83%，严格峰谷为59.03% / 54.86%。</p>
-<p class="source"><a href="downloads/parameters.json">定版指标</a> · <a href="downloads/final_daily_metrics.csv">逐日主口径及严格重合率</a></p>
+<p class="source"><a href="resources.html?file=parameters.json">定版指标</a> · <a href="resources.html?file=final_daily_metrics.csv">逐日主口径及严格重合率</a></p>
 </section>
 <section id="explore"><h2>自定义日期区间核算</h2>
 <p>选择起止日期后，使用完整精度逐小时结果重新计算两版指标，起止当天均计入。默认显示全部36天。</p>
@@ -59,19 +59,19 @@ RMSE = sqrt(mean((预测价 − 实际价)²))
 <p class="small">气象面板沿用冻结报告中的显示精度。区间指标使用完整精度价格，天气面板各序列与气象文档中的日级聚合口径对应。</p>
 </details>
 <details><summary>当天24小时原始对比数据</summary><div id="hourlyTable" class="table-scroll" tabindex="0"></div></details>
-<p class="source"><a href="downloads/hourly_comparison.csv" download>下载全部864小时原始对比CSV</a> · <a href="downloads/final_hourly_predictions.csv" download>下载定版全部输出字段</a></p>
+<p class="source"><a href="resources.html?file=hourly_comparison.csv">在线查看全部864小时原始对比</a> · <a href="resources.html?file=final_hourly_predictions.csv">在线查看定版全部输出字段</a></p>
 </section>
 <section id="audit"><h2>重新拟合、历史重建与因果扰动检查</h2>
 <p>定版实现已对36天逐日重新拟合，864条原始预测的最大差异为1.51×10<sup>−12</sup>。250天夜间历史预测和278天晚间历史预测分别重建，与原筛选输入的最大差异均为5.68×10<sup>−14</sup>。</p>
 <p>10月1日、10月20日和11月5日三个审计日，分别将目标日及以后价格、未来OOF记录、从T−2开始的新能源实测出力大幅扰动。目标日及之前必需特征、24小时原始价、最终价和排序分数保持一致。已训练快照只传入特征再次推理，输出同样一致。</p>
 <p>上述检查说明实现遵守了当前数据索引下的标签截止和T−3实测滞后。审计同时记录原22个研究源文件和原预测结果的指纹一致性。数据的真实历史发布版本仍需单独判断。</p>
-<p class="source"><a href="downloads/fresh_reproduction.json">36天全部重拟合</a> · <a href="downloads/history_reproduction.json">历史OOF重建</a> · <a href="downloads/causality_audit.json">因果扰动结果</a></p>
+<p class="source"><a href="resources.html?file=fresh_reproduction.json">36天全部重拟合</a> · <a href="resources.html?file=history_reproduction.json">历史OOF重建</a> · <a href="resources.html?file=causality_audit.json">因果扰动结果</a></p>
 </section>
 <section id="limits"><h2>结果适用边界与工程解读</h2>
 <p>研究初期将九月用于开发，十月1日至十一月5日用于比较；之后两段都被反复用于方法探索和选择。当前36天指标属于复用研究基准，尚无新的独立留出期。九月复用研究结果的MAE为43.61，与当前区间35.36存在明显差异。</p>
 <p>市场边界量与实测出力来自当前已有归档，缺少每次修订及发布时间。Previous Runs lead=1按有效时刻固定提前约24小时，无法还原历史D日08:45的完整信息集。T−3滞后控制了实测索引，但无法证明归档值与当时首次可见版本一致。</p>
 <p>因此，本报告支持在相同冻结数据上复核原始基线和定版差异。实际新日期的效果需由连续、顺序、保留输入版本的评估验证。当前网站只使用本次已核对的2026年10月1日至11月5日结果。</p>
-<p class="source"><a href="downloads/three_direction_selection.json">九月结果及探索选择记录</a> · <a href="weather.html#source">天气时间语义</a></p>
+<p class="source"><a href="resources.html?file=three_direction_selection.json">九月结果及探索选择记录</a> · <a href="weather.html#source">天气时间语义</a></p>
 </section>
 
-<footer>依据定版实现、冻结预测明细与审计记录编写。价格单位元/MWh，边界功率单位MW。<a href="index.html#evidence">证据与下载</a></footer></main></div></body></html>
+<footer>依据定版实现、冻结预测明细与审计记录编写。价格单位元/MWh，边界功率单位MW。<a href="index.html#evidence">资料在线查阅</a></footer></main></div></body></html>

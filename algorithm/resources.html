@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="参数、字段、逐小时结果与复核记录可直接在网页中阅读。表格支持日期筛选、搜索和分页。"><meta name="color-scheme" content="light"><title>资料在线查阅 · 宁夏D1算法工程文档</title>
+<link rel="stylesheet" href="assets/style.css?v=2127a3fffd"><script src="assets/app.js?v=2728bcb90c" defer></script><script src="assets/resources.js?v=71de764c98" defer></script></head><body>
+<a class="skip" href="#main">跳到正文</a><header class="topbar"><a class="brand" href="index.html">宁夏 D+1<span>算法工程文档</span></a><span class="version">NX-D1-Slim-1.0</span><button type="button" class="print" data-print>打印 / 保存 PDF</button></header>
+<div class="layout"><aside class="sidebar"><nav aria-label="文档章节"><a href="index.html">方案总览</a><a href="weather.html">气象与数据处理</a><a href="model.html">算法实现</a><a href="backtest.html">回测与复核</a><a href="resources.html" aria-current="page">资料查阅</a></nav><div class="toc"><p>本页目录</p><nav aria-label="本页目录"><a href="#viewer">查看资料</a><a href="#catalog">全部资料</a></nav></div><p class="sidebar-note">编制 2026-11-12<br>定版参数 2026-11-10<br>交割时区 Asia/Shanghai</p></aside>
+<main id="main"><header class="article-header"><h1>资料在线查阅</h1><p class="lead">参数、字段、逐小时结果与复核记录可直接在网页中阅读。表格支持日期筛选、搜索和分页。</p></header><section id="viewer">
+<div class="resource-heading"><label for="resourceSelect">选择资料</label><select id="resourceSelect" aria-label="选择在线查看的资料"></select></div>
+<h2 id="resourceTitle">正在载入资料…</h2>
+<p id="resourceDescription" class="small"></p>
+<p id="resourceStatus" role="status" aria-live="polite">正在准备在线阅读内容…</p>
+<div id="resourceFilters" class="resource-filters" hidden>
+<label>搜索表格<input type="search" id="resourceSearch" placeholder="字段、日期或数值" autocomplete="off"></label>
+<label id="resourceStartLabel">起始日期<input type="date" id="resourceStart"></label>
+<label id="resourceEndLabel">结束日期<input type="date" id="resourceEnd"></label>
+<label>每页行数<select id="resourcePageSize"><option value="25">25</option><option value="50" selected>50</option><option value="100">100</option></select></label>
+<button type="button" id="resetResourceFilters">重置筛选</button>
+</div>
+<div id="resourceContent"></div>
+<div id="resourcePagination" class="resource-pagination" hidden><button type="button" id="resourcePrevious">上一页</button><span id="resourcePageLabel" aria-live="polite"></span><button type="button" id="resourceNext">下一页</button></div>
+<p id="resourcePrecision" class="small" hidden>价格与误差显示至小数点后4位，准确率显示为百分比。悬停数值可查看原始精度。</p>
+<p class="resource-save"><a id="resourceDownload" download hidden>下载原始文件</a></p>
+</section>
+<section id="catalog"><h2>全部在线资料</h2><div class="downloads"><a href="resources.html?file=parameters.json"><b>完整定版参数</b><span>模型窗口、特征、融合权重与校准参数，按结构分组查看。</span></a><a href="resources.html?file=feature_dictionary.csv"><b>输入字段清单</b><span>91条集合字段记录，包含44维小时输入及夜间、晚间的各输入集合。</span></a><a href="resources.html?file=hourly_comparison.csv"><b>两版逐小时对比</b><span>864小时实际价、原始基线与定版预测，以及逐小时误差和准确率。</span></a><a href="resources.html?file=final_hourly_predictions.csv"><b>定版全部输出</b><span>包括原始价、最终价、排序分数、夜间低价概率与分时段价格水平。</span></a><a href="resources.html?file=final_daily_metrics.csv"><b>定版逐日指标</b><span>36天的误差、准确率、主口径峰谷捕获与严格时段重合率。</span></a><a href="resources.html?file=final_monthly_metrics.csv"><b>定版月度指标</b><span>十月全月及十一月1日至5日的指标。</span></a><a href="resources.html?file=model_comparison.csv"><b>三版模型指标对比</b><span>原始基线、旧复杂方案与最终精简方案的同区间对比。</span></a><a href="resources.html?file=model_size_tradeoff.csv"><b>基础模型规模对比</b><span>固定夜间与晚间水平后，对比单森林、双森林及更多基础模型。</span></a><a href="resources.html?file=training_cutoffs.csv"><b>36天训练截止日期</b><span>逐日核对各模块最后训练日及出力偏差数据截止日。</span></a><a href="resources.html?file=weather_manifest.json"><b>气象取数清单</b><span>天气模式、变量、点位、时间范围与归档文件指纹。</span></a><a href="resources.html?file=weather_ablation_research.csv"><b>历史夜间天气消融</b><span>在旧复杂骨架上进行，基准MAE为34.4465。最终双森林版本尚未逐项重跑此消融。</span></a><a href="resources.html?file=weather_model_factorial.csv"><b>天气与模型交叉实验</b><span>原7列天气与扩展天气在不同学习器、共同校准条件下的结果。</span></a><a href="resources.html?file=performance.json"><b>性能测量汇总</b><span>训练并预测、快照推理、进程内存及计时范围。</span></a><a href="resources.html?file=causality_audit.json"><b>因果扰动审计</b><span>未来价格、未来OOF与近期实测扰动的检查记录。</span></a><a href="resources.html?file=fresh_reproduction.json"><b>864点重新拟合复核</b><span>36天全部重训的数值重现与指标。</span></a><a href="resources.html?file=history_reproduction.json"><b>历史OOF重建复核</b><span>250天夜间及278天晚间历史滚动预测的重建差异。</span></a><a href="resources.html?file=three_direction_selection.json"><b>后续探索选择记录</b><span>25组探索的选择结果、复用九月区间表现与数据限制。</span></a></div></section>
+<footer>依据定版实现、冻结预测明细与审计记录编写。价格单位元/MWh，边界功率单位MW。<a href="index.html#evidence">资料在线查阅</a></footer></main></div></body></html>
